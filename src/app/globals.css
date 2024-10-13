@@ -2,26 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer components {
+  .container {
+    width: 100%; /* Full width on mobile */
+    max-width: 480px; /* Max width for mobile view */
+    margin: 0 auto; /* Center container on larger screens */
+    padding: 0 0; /* Mobile padding for small devices */
   }
-}
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  .bg-splash {
+    background: linear-gradient(
+      180deg,
+      rgba(61, 184, 245, 0.25) 20%,
+      rgba(255, 255, 255, 0.25) 100%
+    );
+  }
+  .bg-splash-dimmed {
+    background: linear-gradient(
+      180deg,
+      rgba(61, 184, 245, 0.05) 15.43%,
+      rgba(255, 255, 255, 0.05) 77.15%
+    );
+  }
+  .bg-blur {
+    background: linear-gradient(180deg, rgba(217, 217, 217, 0) 0%, #ffffff 50%);
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
   }
 }
