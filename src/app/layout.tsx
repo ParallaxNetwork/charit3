@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 
 const interFont = localFont({
   src: [
@@ -114,6 +115,7 @@ export default function RootLayout({
         className={`${interFont.variable} antialiased font-[family-name:var(--font-inter)]`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );

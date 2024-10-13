@@ -55,14 +55,14 @@ const HomePage = (props: Props) => {
           <div className="bg-white border border-dark/20 rounded-2xl text-center flex flex-col items-center gap-4 p-6">
             <LuPiggyBank className="text-xl" />
             <p className="text-xl text-dark font-bold">$0.00</p>
-            <div className="px-3 py-1 font-medium text-sm text-dark">
+            <div className="px-3 py-1 font-medium text-sm text-dark bg-lilac rounded-full font-medium">
               Stake Amout
             </div>
           </div>
           <div className="bg-white border border-dark/20 rounded-2xl text-center flex flex-col items-center gap-4 p-6">
             <BiDonateHeart className="text-xl" />
             <p className="text-xl text-dark font-bold">$450.00</p>
-            <div className="px-3 py-1 font-medium text-sm text-dark">
+            <div className="px-3 py-1 font-medium text-sm text-dark bg-lilac rounded-full font-medium">
               Donation Amount
             </div>
           </div>
