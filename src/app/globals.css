@@ -27,6 +27,15 @@
   .bg-blur {
     background: linear-gradient(180deg, rgba(217, 217, 217, 0) 0%, #ffffff 50%);
   }
+
+  .btn-pledge {
+    box-shadow: 0px 0px 14px 0px #3db8f580;
+    @apply w-20 h-20 bg-blue flex items-center justify-center rounded-full hover:bg-blue/90;
+  }
+
+  .badge {
+    @apply px-3 py-1 font-medium text-sm text-dark bg-lilac rounded-full inline-block;
+  }
 }
 
 @layer utilities {
