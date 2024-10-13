@@ -4,9 +4,16 @@ pragma solidity ^0.8.22;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import { IQuoter } from "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
-import { IWETH } from "@uniswap/v3-periphery/contracts/interfaces/external/IWETH9.sol";
+import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+
+interface IWETH9 is IERC20 {
+    /// @notice Deposit ether to get wrapped ether
+    function deposit() external payable;
+
+    /// @notice Withdraw wrapped ether to get ether
+    function withdraw(uint256) external;
+}
 
 contract DonationManager is Ownable {
     ISwapRouter public swapRouter;
@@ -23,8 +30,8 @@ contract DonationManager is Ownable {
     
     Withdrawal[] public withdrawals;
 
-    uint256 roundId;
-    uint256 issueId;
+    uint256 public roundId;
+    uint256 public issueId;
     mapping(uint256 => Round) public rounds;
     mapping(uint256 => Issue) public issues;
 
@@ -39,7 +46,7 @@ contract DonationManager is Ownable {
     error HasActiveRound(uint256 roundId);
     error InvalidRoundTiming();
     error VotingAlreadyStarted();
-    error InvalidYield();
+    error NoYield();
 
     // Event to emit when a YES vote is cast
     event YesVoted(
@@ -56,8 +63,7 @@ contract DonationManager is Ownable {
     );
 
     event DonationDispersed(
-        uint256 indexed roundId,
-        uint256 amount
+        uint256 indexed roundId
     );
 
     event YieldSwappedToETH(
@@ -95,8 +101,6 @@ contract DonationManager is Ownable {
     mapping(uint256 => mapping(address => bool)) public adminApprovals; // requestId => admin address => approval
 
     event Deposited(address sender, uint256 ethAmount);
-    event SwappedToCbETH(address sender, uint256 cbETHAmount);
-    event SwappedToETH(address sender, uint256 ETHAmount);
     event IssueCreated(uint256 roundId, uint256 issueID);
     event IssueDeactivated(uint256 roundId);
 
@@ -112,94 +116,19 @@ contract DonationManager is Ownable {
 
     receive() external payable {}
 
-    // Swap the sender's deposited ETH for cbETH
-    function depositToCbETH() external payable {
-        require(msg.value > 0, "ETH amount must be greater than 0");
-
-        uint256 estimatedAmountOut = getEstimatedCbETHForETH(msg.value);
-        uint256 amountOutMinimum = estimatedAmountOut * 99 / 100;  // 1% slippage tolerance
-
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: WETH9,
-            tokenOut: cbETH,
-            fee: 500,
-            recipient: msg.sender, // For testing purpose
-            deadline: block.timestamp + 15,
-            amountIn: msg.value,
-            amountOutMinimum: amountOutMinimum,
-            sqrtPriceLimitX96: 0
-        });
-
-        uint256 amountOut = swapRouter.exactInputSingle{value: msg.value}(params);
-        deposits[msg.sender] += msg.value;
-        initialETHDeposited += msg.value;
-        emit SwappedToCbETH(msg.sender, amountOut);
-    }
-
-    function getEstimatedCbETHForETH(uint256 amountIn) public returns (uint256) {
-        uint256 estimatedAmountOut = quoter.quoteExactInputSingle(
-            WETH9,
-            cbETH,
-            500,
-            amountIn,
-            0
-        );
-
-        return estimatedAmountOut;
-    }
-
-    function getEstimatedETHForCbETH(uint256 amountIn) public returns (uint256) {
-        uint256 estimatedAmountOut = quoter.quoteExactInputSingle(
-            cbETH,
-            WETH9,
-            500,
-            amountIn,
-            0
-        );
-
-        return estimatedAmountOut;
+    function stake(uint256 ethAmount) external {
+        
+        deposits[msg.sender] += ethAmount;
+        initialETHDeposited += ethAmount;
     }
 
     // Swap cbETH back to ETH but only return the initial stake, keep the yield in the contract
-    function withdrawToETH(uint256 ethAmount) external {
+    function withdrawETH(uint256 ethAmount) external {
         require(deposits[msg.sender] >= ethAmount, "Insufficient ETH balance");
 
-        // Get the estimated amount of cbETH needed to get the requested ethAmount
-        uint256 estimatedCbETHNeeded = getEstimatedCbETHForETH(ethAmount);
-
-        // Transfer the estimated cbETH amount from the user to this contract
-        require(IERC20(cbETH).balanceOf(msg.sender) >= estimatedCbETHNeeded, "Insufficient cbETH balance");
-        IERC20(cbETH).transferFrom(msg.sender, address(this), estimatedCbETHNeeded);
-        IERC20(cbETH).approve(address(swapRouter), estimatedCbETHNeeded);
-
-        // Perform the swap: cbETH -> WETH -> ETH
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: cbETH,
-            tokenOut: WETH9,
-            fee: 500,
-            recipient: address(this),
-            deadline: block.timestamp + 15,
-            amountIn: estimatedCbETHNeeded,  // Swap only the necessary amount of cbETH
-            amountOutMinimum: ethAmount * 99 / 100,  // 1% slippage tolerance for the minimum ETH output
-            sqrtPriceLimitX96: 0
-        });
-
-        uint256 amountOut = swapRouter.exactInputSingle(params);
-
-        // Ensure the swapped ETH is enough to meet the requested amount
-        require(amountOut >= ethAmount, "Insufficient ETH received");
-
-        // Unwrap WETH to ETH and transfer ETH to the user
-        IWETH9(WETH9).withdraw(amountOut);
-
-        (bool success, ) = msg.sender.call{value: amountOut}("");
-        require(success, "ETH transfer failed");
         deposits[msg.sender] -= ethAmount;
         initialETHDeposited -= ethAmount;
-
-        emit SwappedToETH(msg.sender, estimatedCbETHNeeded, amountOut);
     }
-
 
     function createRound(
         uint256 issueRegisStart,
@@ -257,9 +186,9 @@ contract DonationManager is Ownable {
     }
 
     // Admin-only function to deactivate an issue
-    function deactivateIssue(uint256 _roundId) external onlyOwner {
-        issues[_roundId].isActive = false;
-        emit IssueDeactivated(_roundId);
+    function deactivateIssue(uint256 _issueId) external onlyOwner {
+        issues[_issueId].isActive = false;
+        emit IssueDeactivated(_issueId);
     }
 
     // Vote commits
@@ -295,8 +224,6 @@ contract DonationManager is Ownable {
         emit NoVoted(msg.sender, roundId, noVotes);
     }
 
-    
-
     // Withdraw any token except cbETH
     function withdrawToken(
         address tokenAddress,
@@ -309,12 +236,25 @@ contract DonationManager is Ownable {
         IERC20(tokenAddress).transfer(owner(), amount);
     }
 
-    // Request to withdraw cbETH, requiring 3 admin approvals
+    // Request to withdraw cbETH, requiring 3 admin approvals, only yields
     function withdrawCbETH(uint256 amount) external {
-        require(
-            amount <= IERC20(cbETH).balanceOf(address(this)),
-            "Insufficient cbETH balance"
-        );
+        uint256 currentCbETHBalance = IERC20(cbETH).balanceOf(address(this));
+
+        // Calculate the total ETH value of the current cbETH balance in the contract
+        uint256 cbETHPriceInETH = getCbETHToETHPrice();
+        uint256 totalETHValue = (currentCbETHBalance * getCbETHToETHPrice()) / 1e18;
+
+        // Calculate the excess ETH value over the initial ETH deposited (yield)
+        if(totalETHValue <= initialETHDeposited)
+            revert NoYield();
+
+        uint256 yieldInETH = totalETHValue - initialETHDeposited;
+
+        // Calculate the maximum amount of cbETH that can be withdrawn, which is yield only
+        uint256 maxWithdrawableCbETH = (yieldInETH * 1e18) / cbETHPriceInETH;
+
+        // Ensure the requested amount is less than or equal to the withdrawable amount (yield)
+        require(amount <= maxWithdrawableCbETH, "Amount exceeds yield");
 
         withdrawals.push(
             Withdrawal({
@@ -323,6 +263,18 @@ contract DonationManager is Ownable {
                 approved: false
             })
         );
+    }
+
+    function getCbETHToETHPrice() public view returns (uint256 priceInETH) {
+        // Get the pool contract at the known address
+        IUniswapV3Pool pool = IUniswapV3Pool(0x10648BA41B8565907Cfa1496765fA4D95390aa0d);
+
+        // Fetch slot0, which includes the current sqrtPriceX96
+        (uint160 sqrtPriceX96,,,,,,) = pool.slot0();
+
+        // Convert sqrtPriceX96 to human-readable price (cbETH per WETH/ETH)
+        priceInETH = (uint256(sqrtPriceX96) ** 2) * 1e18 / (2 ** 192);
+        return priceInETH;
     }
 
     // Approve cbETH withdrawal by an admin
@@ -343,68 +295,22 @@ contract DonationManager is Ownable {
         }
 
         if (approvalCount >= 3) {
-            // Execute the withdrawal
-            IERC20(cbETH).transfer(
-                withdrawals[requestId].requester,
-                withdrawals[requestId].amount
-            );
             withdrawals[requestId].approved = true;
         }
     }
-
-    function getYieldAmount() external view returns (uint256) {
-        uint256 cbETHToETH = getEstimatedETHForCbETH(IERC20(cbETH).balanceOf(address(this)));
-
-        return cbETHToETH > initialETHDeposited ? cbETHToETH - initialETHDeposited : 0;
-    }
-
-    function swapYieldToETH() internal {
-        uint256 yieldAmount = getYieldAmount();  // Yield in ETH
-        if (yieldAmount == 0) {
-            revert InvalidYield();
-        }
-
-        // Get the estimated amount of cbETH needed to get the yieldAmount in ETH
-        uint256 cbETHAmount = getEstimatedCbETHForETH(yieldAmount);
-        
-        // Transfer cbETH from the contract to the router
-        IERC20(cbETH).approve(address(swapRouter), cbETHAmount);
-
-        // Perform the swap: cbETH -> WETH -> ETH
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: cbETH,
-            tokenOut: WETH9,
-            fee: 500,
-            recipient: address(this),  // Contract receives the ETH output
-            deadline: block.timestamp + 15,
-            amountIn: cbETHAmount,
-            amountOutMinimum: yieldAmount * 99 / 100,  // 1% slippage tolerance
-            sqrtPriceLimitX96: 0
-        });
-
-        // Execute the swap
-        uint256 amountOut = swapRouter.exactInputSingle(params);
-
-        // Unwrap WETH to ETH, keep in contract
-        IWETH9(WETH9).withdraw(amountOut);
-
-        emit YieldSwappedToETH(cbETHAmount, amountOut);
-    }
-
 
     function disperseDonation(address[] calldata recipients, uint256[] calldata values) external onlyAdmin() {
         if(rounds[roundId].votingEnd > block.timestamp){
             revert HasActiveRound(roundId);
         }
 
-        swapYieldToETH();
         for (uint256 i = 0; i < recipients.length; i++) {
             (bool success, ) = recipients[i].call{value: values[i]}("");
             require(success, "Transfer failed");
         }
 
         rounds[roundId].isActive = false;
-        emit DonationDispersed(roundId, msg.value);
+        emit DonationDispersed(roundId);
     }
 
     function withdrawETH() external onlyOwner {
