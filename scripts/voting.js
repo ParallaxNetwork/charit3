@@ -13,6 +13,8 @@ async function main() {
     );
 
     console.log("DonationManager deployed to:", await donationManager.getAddress());
+    console.log("-".repeat(30));
+
 
     // Create a round (start immediately, ends in 2 days)
     const currentTimestamp = await time.latest();
@@ -21,7 +23,7 @@ async function main() {
     const votingEnd = votingStart + 2 * 24 * 60 * 60; // 2 days later
 
     await donationManager.createRound(issueRegisStart, votingStart, votingEnd);
-    console.log("Round created");
+    console.log("Round created number:", await donationManager.roundId());
 
     // Create 5 issues
     await donationManager.connect(issue1Creator).createIssue(voter1.address);
@@ -30,10 +32,18 @@ async function main() {
     await donationManager.connect(issue4Creator).createIssue(voter4.address);
     await donationManager.connect(issue5Creator).createIssue(voter5.address);
 
-    console.log("5 issues created");
+    console.log("Issues created number:", await donationManager.issueId());
+
+    const firstIssueIdForTheRound = await donationManager.roundStartIssueId(1);
+    console.log("First issue id for the round:", firstIssueIdForTheRound);
 
     // Fast forward to the start of the voting period
     await time.increase(10);
+
+    console.log("-".repeat(30));
+    console.log("Voting period started");
+    console.log("-".repeat(30));
+
 
     // Voter 1: votes all yes (issues 1-5)
     await donationManager.connect(voter1).voteYes(createBitmap([1, 2, 3, 4, 5])); // Yes to All
@@ -43,10 +53,15 @@ async function main() {
 
     // Voter 3: votes in two sessions
     // First session: yes to issue 1, 3, no to issue 2
-    await donationManager.connect(voter3).voteYes(createBitmap([1, 3])); // Yes to 1 and 3
+    await donationManager.connect(voter3).voteYes(createBitmap([1, 4])); // Yes to 1 and 3
     await donationManager.connect(voter3).voteNo(createBitmap([2]));     // No to 2
+
+
+    const unvotedIssues = await getUnvotedIssues(await donationManager.userVotesBitmap(voter3.address, 1), 1, 5);
+    console.log(`User ${voter3.address} has note voted on issues: ${unvotedIssues}`);
+
     // Second session: yes to issue 4, no to issue 5
-    await donationManager.connect(voter3).voteYes(createBitmap([4])); // Yes to 4
+    await donationManager.connect(voter3).voteYes(createBitmap([3])); // Yes to 4
     await donationManager.connect(voter3).voteNo(createBitmap([5]));  // No to 5
 
     // Voter 4: votes in two sessions
@@ -60,11 +75,14 @@ async function main() {
     await donationManager.connect(voter5).voteYes(createBitmap([1, 2, 5]));
     await donationManager.connect(voter5).voteNo(createBitmap([3, 4]));
 
+    console.log("-".repeat(30));
     console.log("Voting completed");
+
 
     // Fast forward to the end of the voting period
     await time.increase(2 * 24 * 60 * 60 + 1); // Forward 2 days
 
+    // !!!
     // Filter YesVoted events between the start and end time of voting (cannot be used in local)
     // const yesVoteEvents = await donationManager.queryFilter(
     //     donationManager.filters.YesVoted(),
@@ -137,6 +155,22 @@ function createBitmap(issueIds) {
     });
     return bitmap;
 }
+
+async function getUnvotedIssues(votesBitmap, startIssueId, issueCount) {
+    const binaryString = votesBitmap.toString(2).padStart(issueCount, '0'); // Convert bitmap to binary and pad to the number of issues
+    const unvotedIssues = [];
+
+    // Loop through the binary string and check for unvoted issues (where bit is '0')
+    for (let i = 0; i < issueCount; i++) {
+        const bitIndex = issueCount - 1 - i; // Start from the end of the binary string
+        if (binaryString[bitIndex] === '0') {
+            unvotedIssues.push(startIssueId + i); // Add the unvoted issue ID
+        }
+    }
+
+    return unvotedIssues;
+}
+
 
 main().catch((error) => {
     console.error(error);
