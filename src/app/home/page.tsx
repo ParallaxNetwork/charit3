@@ -12,6 +12,9 @@ import StakeForm from "@/components/form/stake";
 type Props = {};
 
 const HomePage = (props: Props) => {
+  // fetch staked amount
+  // if staked amount is 0, show the stake form
+
   return (
     <div className="container bg-splash-dimmed">
       <Nav />

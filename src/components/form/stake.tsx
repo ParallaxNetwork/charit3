@@ -19,7 +19,7 @@ import { LuDollarSign } from "react-icons/lu";
 type Props = {};
 
 const formSchema = z.object({
-  amount: z.string().min(2).max(50),
+  amount: z.string(),
 });
 
 const StakeForm = (props: Props) => {
