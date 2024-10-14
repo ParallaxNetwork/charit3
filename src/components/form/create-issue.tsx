@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
+import React, { Suspense } from "react";
 import { LuMoveLeft } from "react-icons/lu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -20,9 +20,7 @@ import { Textarea } from "../ui/textarea";
 import { LuImagePlus } from "react-icons/lu";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { cn } from "@/lib/utils";
-import { toast, useToast } from "@/hooks/use-toast";
-
-type Props = {};
+import { useToast } from "@/hooks/use-toast";
 
 const categoryTopics = [
   "Property & Hunger",
@@ -75,7 +73,7 @@ const formSchema = z.object({
   // typeof window === "undefined" ? z.any() : z.array(z.instanceof(FileList)),
 });
 
-const CreateIssueForm = (props: Props) => {
+const CreateIssueFormContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -257,14 +255,16 @@ const CreateIssueForm = (props: Props) => {
                     Supporting Image
                     <div className="mt-2 flex gap-2 flex-wrap">
                       {field.value?.length ? (
-                        Array.from(field.value).map((file: any, i: number) => (
-                          <img
-                            key={i}
-                            src={URL.createObjectURL(file)}
-                            alt="thumbnail"
-                            className="w-[124px] h-[124px] object-cover object-center rounded-lg bg-shade-white"
-                          />
-                        ))
+                        Array.from(field.value).map(
+                          (file: unknown, i: number) => (
+                            <img
+                              key={i}
+                              src={URL.createObjectURL(file as File)}
+                              alt="thumbnail"
+                              className="w-[124px] h-[124px] object-cover object-center rounded-lg bg-shade-white"
+                            />
+                          )
+                        )
                       ) : (
                         <>
                           <div className="w-[124px] h-[124px] object-cover object-center rounded-lg bg-shade-white"></div>
@@ -339,6 +339,14 @@ const CreateIssueForm = (props: Props) => {
         </Form>
       </div>
     </div>
+  );
+};
+
+const CreateIssueForm = () => {
+  return (
+    <Suspense>
+      <CreateIssueFormContent />
+    </Suspense>
   );
 };
 

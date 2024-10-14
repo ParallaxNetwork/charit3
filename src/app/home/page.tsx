@@ -9,9 +9,7 @@ import { BiDonateHeart } from "react-icons/bi";
 
 import StakeForm from "@/components/form/stake";
 
-type Props = {};
-
-const HomePage = (props: Props) => {
+const HomePage = () => {
   // fetch staked amount
   // if staked amount is 0, show the stake form
 

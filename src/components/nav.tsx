@@ -5,9 +5,7 @@ import React from "react";
 import { Button } from "./ui/button";
 import { usePathname, useRouter } from "next/navigation";
 
-type Props = {};
-
-const Nav = (props: Props) => {
+const Nav = () => {
   const router = useRouter();
   const currentPath = usePathname();
   return (

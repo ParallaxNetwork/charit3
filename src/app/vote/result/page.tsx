@@ -1,8 +1,6 @@
 import React from "react";
 
-type Props = {};
-
-const VotingResult = (props: Props) => {
+const VotingResult = () => {
   return <div>VotingResult</div>;
 };
 

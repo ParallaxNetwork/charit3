@@ -15,8 +15,6 @@ import {
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
-type Props = {};
-
 export const cardData: CardData[] = [
   {
     id: 0,
@@ -230,10 +228,10 @@ export const cardData: CardData[] = [
   },
 ];
 
-const VoteForm = (props: Props) => {
+const VoteForm = () => {
   const [cards, setCards] = useState<CardData[]>(cardData);
-  const [rightSwipe, setRightSwipe] = useState(0);
-  const [leftSwipe, setLeftSwipe] = useState(0);
+  const [rightSwipe, setRightSwipe] = useState(0); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [leftSwipe, setLeftSwipe] = useState(0); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [api, setApi] = useState<CarouselApi>();
   const [selectedScrollSnap, setSelectedScrollSnap] = useState(0);
 
@@ -259,16 +257,16 @@ const VoteForm = (props: Props) => {
     }
   };
 
-  const stats = [
-    {
-      name: "Left",
-      count: leftSwipe,
-    },
-    {
-      name: "Right",
-      count: rightSwipe,
-    },
-  ];
+  // const stats = [
+  //   {
+  //     name: "Left",
+  //     count: leftSwipe,
+  //   },
+  //   {
+  //     name: "Right",
+  //     count: rightSwipe,
+  //   },
+  // ];
 
   return (
     <div className="relative">
@@ -356,7 +354,7 @@ const VoteForm = (props: Props) => {
           <Carousel setApi={setApi}>
             <CarouselContent>
               {Array.from({ length: 5 }).map((_, i) => (
-                <CarouselItem>
+                <CarouselItem key={i}>
                   <img
                     src="https://s3-alpha-sig.figma.com/img/dbed/fad1/ad943f3af9bb0d0b147b17f107d025f8?Expires=1729468800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=FOgwJlhVktE8Lw4bgx2SxxPUYiBIjkrs-oOlyjQ4RfQBBPCC-LKD-jHpJTDliDWZRTHphRW4QJ-SV7u8KAz6~QzSgsPcf7oxOmq-mQl0UOGTatXL~PFoEaBuCw9LCezcLCI-3M8-kXcDz-DpkJ0Y~IjcYmHXfOVMl8M9f41bM1HyRbHgqOCt6V4o6ksiBYj3iF~xf7~rPKB9rvFJA4VHhfYDBeIl1g7OW9i2~KHRT0ZLlnT9dx8hYdKwSWtJiqqk6K~HqCrw4lPuk~DfpeydjSbxbmFwNRjzvGNg1uVrlFSMbQKqy2nHrGPRC7fIDDCXd1GRjAlrekkIlJ51It27qg__"
                     alt="carousel"
@@ -391,11 +389,11 @@ const VoteForm = (props: Props) => {
             The price of Bitcoin (BTC) has fallen by 2.77% over the last 24 hour
           </p>
           <p>
-            On the daily chart, the rate of BTC is falling after a failed
+            {`On the daily chart, the rate of BTC is falling after a failed
             attempt to fix above the $66,000 zone. If today's bar closes near
             its low, there is a chance to see a test of the $60,000-$62,000
             range by the end of the week. Bitcoin is trading at $63,966 at press
-            time.
+            time.`}
           </p>
           <p>
             <b>BTC/USD</b>
@@ -404,11 +402,11 @@ const VoteForm = (props: Props) => {
             The price of Bitcoin (BTC) has fallen by 2.77% over the last 24 hour
           </p>
           <p>
-            On the daily chart, the rate of BTC is falling after a failed
+            {`On the daily chart, the rate of BTC is falling after a failed
             attempt to fix above the $66,000 zone. If today's bar closes near
             its low, there is a chance to see a test of the $60,000-$62,000
             range by the end of the week. Bitcoin is trading at $63,966 at press
-            time.
+            time.`}
           </p>
         </div>
 

@@ -28,7 +28,7 @@ const CardVote = ({ data, active, removeCard }: CardProps) => {
   const [exitX, setExitX] = useState(0);
 
   const x = useMotionValue(0);
-  const input = [-200, 0, 200];
+  // const input = [-200, 0, 200];
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -125, 0, 125, 200], [0, 1, 1, 1, 0]);
 

@@ -1,8 +1,6 @@
 import React from "react";
 
-type Props = {};
-
-const MultiImage = (props: Props) => {
+const MultiImage = () => {
   return <div>MultiImage</div>;
 };
 

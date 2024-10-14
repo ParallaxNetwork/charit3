@@ -16,13 +16,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { LuDollarSign } from "react-icons/lu";
 
-type Props = {};
-
 const formSchema = z.object({
   amount: z.string(),
 });
 
-const StakeForm = (props: Props) => {
+const StakeForm = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {

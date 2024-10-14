@@ -1,8 +1,7 @@
 import CreateIssueForm from "@/components/form/create-issue";
 import React from "react";
-type Props = {};
 
-const CreateIssue = (props: Props) => {
+const CreateIssue = () => {
   return (
     <div className="container">
       <CreateIssueForm />

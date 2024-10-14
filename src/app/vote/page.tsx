@@ -2,9 +2,7 @@ import VoteForm from "@/components/form/vote";
 import Nav from "@/components/nav";
 import React from "react";
 
-type Props = {};
-
-const VotePage = (props: Props) => {
+const VotePage = () => {
   return (
     <div className="container">
       <Nav />
