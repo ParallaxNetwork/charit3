@@ -93,6 +93,7 @@ contract DonationManager is Ownable {
 
     // To handle admin cbETH withdrawals
     struct Withdrawal {
+        uint256 requestId;
         uint256 amount;
         address requester;
         bool approved;
@@ -237,7 +238,7 @@ contract DonationManager is Ownable {
     }
 
     // Request to withdraw cbETH, requiring 3 admin approvals, only yields
-    function withdrawCbETH(uint256 amount) external {
+    function withdrawCbETH(uint256 amount) external onlyAdmin {
         uint256 currentCbETHBalance = IERC20(cbETH).balanceOf(address(this));
 
         // Calculate the total ETH value of the current cbETH balance in the contract
@@ -258,11 +259,14 @@ contract DonationManager is Ownable {
 
         withdrawals.push(
             Withdrawal({
+                requestId: withdrawals.length + 1,
                 amount: amount,
                 requester: msg.sender,
                 approved: false
             })
         );
+
+        adminApprovals[withdrawals.length][msg.sender] = true;
     }
 
     function getCbETHToETHPrice() public view returns (uint256 priceInETH) {
