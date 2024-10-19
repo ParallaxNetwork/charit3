@@ -18,8 +18,8 @@ interface IWETH is IERC20 {
 contract DonationManager is Ownable, ReentrancyGuard {
     IV3SwapRouter public swapRouter;
 
-    address public constant cbETH = 0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22;
-    address public constant WETH = 0x4200000000000000000000000000000000000006;
+    address public cbETH;
+    address public WETH;
 
     address[3] public adminSigners;
     uint256 public initialETHDeposited;
@@ -108,20 +108,24 @@ contract DonationManager is Ownable, ReentrancyGuard {
 
     constructor(
         address _swapRouter,
+        address _cbETH,
+        address _WETH,
         address[3] memory _adminSigners
     ) Ownable(msg.sender) {
         swapRouter = IV3SwapRouter(_swapRouter);
+
+        cbETH = _cbETH;
+        WETH = _WETH;
         adminSigners = _adminSigners;
+        IERC20(WETH).approve(address(swapRouter), type(uint256).max);
     }
 
     receive() external payable {}
 
-// stake in cbETH stored in the contract
+    // stake in cbETH stored in the contract
     function stake(uint256 amountOutMinimum) payable external nonReentrant {
-        
         deposits[msg.sender] += msg.value;
         initialETHDeposited += msg.value;
-
         require(msg.value > 0, "Must pass non-zero ETH amount");
 
         // Define swap parameters
@@ -224,7 +228,7 @@ contract DonationManager is Ownable, ReentrancyGuard {
 
     // Vote commits
    // Function to vote YES on multiple issues, updating the YES count and marking the bitmap
-    function voteYes(uint256 yesVotes) external {
+    function voteYes(uint256 yesVotes) external onlyStaker {
         require(rounds[roundId].isActive, "Invactive round");
 
         uint256 votesBitmap = userVotesBitmap[msg.sender][roundId];
@@ -351,7 +355,7 @@ contract DonationManager is Ownable, ReentrancyGuard {
 
         for (uint256 i = 0; i < recipients.length; i++) {
             totalAmount += values[i];
-            require(totalAmount <= withdrawals[requestId].amount, "Amount exceeds withdrawal amount");
+            require(totalAmount <= withdrawals[requestId].amount, "Insufficient balance");
             (bool success, ) = recipients[i].call{value: values[i]}("");
             require(success, "Transfer failed");
         }
@@ -364,10 +368,10 @@ contract DonationManager is Ownable, ReentrancyGuard {
 
     function withdrawETH() external nonReentrant onlyOwner {
         uint256 balance = address(this).balance;
-        require(balance > 0, "No ETH balance to withdraw");
+        require(balance > 0, "No ETH to withdraw");
 
         (bool success, ) = owner().call{value: balance}("");
-        require(success, "ETH transfer failed");
+        require(success, "Transfer failed");
     }
 
 
@@ -381,4 +385,10 @@ contract DonationManager is Ownable, ReentrancyGuard {
         }
         _;
     }
+
+    modifier onlyStaker() {
+    require(deposits[msg.sender] >= 0.02 ether, "Min stake 0.02 ETH");
+    _;
+}
+
 }

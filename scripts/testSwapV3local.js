@@ -41,8 +41,6 @@ async function main() {
     const SwapV3 = await ethers.getContractFactory("SwapV3");
     const swapV3 = await SwapV3.deploy(
         mockSwapRouterAddress, // SwapRouter address
-        mockQuoterAddress,     // Quoter address
-        mockWETHAddress,       // WETH address
         mockCbETHAddress       // cbETH address
     );
     const swapV3Address = await swapV3.getAddress();
@@ -51,13 +49,6 @@ async function main() {
 
     // Mint WETH and cbETH to SwapV3 contract to simulate liquidity
     const mintAmount = ethers.parseEther("1000"); // 1000 tokens
-
-    // const mintWETHTx = await mockWETH.mint(swapV3Address, mintAmount);
-    // console.log(`Minted ${ethers.formatEther(mintAmount)} WETH to SwapV3`);
-
-    // const mintCbETHTx = await mockCbETH.mint(swapV3Address, mintAmount);
-    // console.log(`Minted ${ethers.formatEther(mintAmount)} cbETH to SwapV3`);
-    // console.log("-".repeat(30));
 
     // Mint cbETH to the user for swapping back to ETH
     const userMintCbETHAmount = ethers.parseEther("100"); // 100 cbETH

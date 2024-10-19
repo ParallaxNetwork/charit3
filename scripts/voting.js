@@ -5,12 +5,63 @@ async function main() {
     // Deploy the DonationManager contract
     const [owner, voter1, voter2, voter3, voter4, voter5, issue1Creator, issue2Creator, issue3Creator, issue4Creator, issue5Creator] = await ethers.getSigners();
 
+    // Deploy MockWETH
+    const MockWETH = await ethers.getContractFactory("MockWETH");
+    const mockWETH = await MockWETH.deploy();
+    const mockWETHAddress = await mockWETH.getAddress();
+    console.log("MockWETH deployed to:", mockWETHAddress);
+    console.log("-".repeat(30));
+
+    // Deploy MockCbETH
+    const MockCbETH = await ethers.getContractFactory("MockCbETH");
+    const mockCbETH = await MockCbETH.deploy();
+    const mockCbETHAddress = await mockCbETH.getAddress();
+    console.log("MockCbETH deployed to:", mockCbETHAddress);
+    console.log("-".repeat(30));
+
+    // Deploy MockSwapRouter
+    const MockSwapRouter = await ethers.getContractFactory("MockSwapRouter");
+    const mockSwapRouter = await MockSwapRouter.deploy();
+    const mockSwapRouterAddress = await mockSwapRouter.getAddress();
+    console.log("MockSwapRouter deployed to:", mockSwapRouterAddress);
+    console.log("-".repeat(30));
+
+    // Deploy MockQuoter
+    const MockQuoter = await ethers.getContractFactory("MockQuoter");
+    const mockQuoter = await MockQuoter.deploy();
+    const mockQuoterAddress = await mockQuoter.getAddress();
+    console.log("MockQuoter deployed to:", mockQuoterAddress);
+    console.log("-".repeat(30));
+
     const DonationManager = await ethers.getContractFactory("DonationManager");
     const donationManager = await DonationManager.deploy(
-        owner.address, // Swap router (dummy address for testing)
-        owner.address, // Quoter (dummy address for testing)
+        mockSwapRouterAddress,
+        mockCbETHAddress,
+        mockWETHAddress,
         [owner.address, owner.address, owner.address] // Admins (owner acts as all admins for simplicity)
     );
+    const donationManagerAddress = await donationManager.getAddress();
+
+    // THIS MINTING ONLY FOR MOCKING
+    const mintAmount = ethers.parseEther("1000"); // 1000 tokens
+
+    // Mint WETH to MockSwapRouter
+    const mintWethToDonationMgrTx = await mockWETH.mint(donationManagerAddress, mintAmount);
+    await mintWethToDonationMgrTx.wait();
+    console.log(`Minted 1000 WETH to DonationManager`);
+
+    // Mint WETH to MockSwapRouter
+    const mintWethToRouterTx = await mockWETH.mint(mockSwapRouterAddress, mintAmount);
+    await mintWethToRouterTx.wait();
+    console.log(`Minted 1000 WETH to MockSwapRouter`);
+
+    // Mint cbETH to MockSwapRouter
+    const mintCbETHToRouterTx = await mockCbETH.mint(mockSwapRouterAddress, mintAmount);
+    await mintCbETHToRouterTx.wait();
+    console.log(`Minted 1000 cbETH to MockSwapRouter`);
+    console.log("-".repeat(30));
+
+
 
     console.log("DonationManager deployed to:", await donationManager.getAddress());
     console.log("-".repeat(30));
@@ -41,9 +92,31 @@ async function main() {
     await time.increase(10);
 
     console.log("-".repeat(30));
-    console.log("Voting period started");
+    console.log("Voters stake");
     console.log("-".repeat(30));
 
+    const ETHswapAmount = '0.03';
+    // in mainnet should get quote to estimate min amount out
+    // const quoteETHToCbETHExactIn = await getQuoteETHToCbETHExactIn(ETHswapAmount, mockWETHAddress, mockCbETHAddress, mockQuoter);
+    await donationManager.connect(voter1).stake(0, {
+        value: ethers.parseEther(ETHswapAmount)
+    });
+    await donationManager.connect(voter2).stake(0, {
+        value: ethers.parseEther(ETHswapAmount)
+    });
+    await donationManager.connect(voter3).stake(0, {
+        value: ethers.parseEther(ETHswapAmount)
+    });
+    await donationManager.connect(voter4).stake(0, {
+        value: ethers.parseEther(ETHswapAmount)
+    });
+    await donationManager.connect(voter5).stake(0, {
+        value: ethers.parseEther(ETHswapAmount)
+    });
+
+    console.log("-".repeat(30));
+    console.log("Voting period started");
+    console.log("-".repeat(30));
 
     // Voter 1: votes all yes (issues 1-5)
     await donationManager.connect(voter1).voteYes(createBitmap([1, 2, 3, 4, 5])); // Yes to All
@@ -171,6 +244,16 @@ async function getUnvotedIssues(votesBitmap, startIssueId, issueCount) {
     return unvotedIssues;
 }
 
+async function getQuoteETHToCbETHExactIn(amountIn, mockWETHAddress, mockCbETHAddress, mockQuoter) {
+    const params = {
+        tokenIn: mockWETHAddress,
+        tokenOut: mockCbETHAddress,
+        fee: 3000,
+        amountIn: ethers.parseEther(amountIn),
+        sqrtPriceLimitX96: 0
+    };
+    return await mockQuoter.quoteExactInputSingle.staticCall(params);
+}
 
 main().catch((error) => {
     console.error(error);
