@@ -66,16 +66,17 @@ async function main() {
   try {
     console.log('-'.repeat(30));
 
-    // use below to estimate minimum cbETH to receive
+    // use below to estimate minimum cbETH to receive (stake)
     const quoteETHToCbETHExactIn = await getQuoteETHToCbETHExactIn(ETHswapAmount);
     console.log(`${ETHswapAmount} WETH -> cbETH Exact In: ${ethers.formatEther(quoteETHToCbETHExactIn.amountOut)} cbETH`);
     console.log('-'.repeat(30));
 
-    // const quoteCbETHToETHExactIn = await getQuoteCbETHToETHExactIn(CbETHswapAmount);
-    // console.log(`${CbETHswapAmount} cbETH -> WETH Exact In: ${ethers.formatEther(quoteCbETHToETHExactIn.amountOut)} WETH`);
-    // console.log('-'.repeat(30));
+    // use below to calculate ETH to receive from exact cbETH (withdraw yield)
+    const quoteCbETHToETHExactIn = await getQuoteCbETHToETHExactIn(CbETHswapAmount);
+    console.log(`${CbETHswapAmount} cbETH -> WETH Exact In: ${ethers.formatEther(quoteCbETHToETHExactIn.amountOut)} WETH`);
+    console.log('-'.repeat(30));
 
-    // use below to estimate cbETH to send back according to initial staked amount
+    // use below to estimate cbETH to send back according to initial staked amount (unstake)
     const quoteCbETHToETHExactOut = await getQuoteCbETHToETHExactOut(ETHAmountOut);
     console.log(`${ethers.formatEther(quoteCbETHToETHExactOut.amountIn)} cbETH -> WETH Exact Out: ${ETHAmountOut} WETH`);
     console.log('-'.repeat(30));

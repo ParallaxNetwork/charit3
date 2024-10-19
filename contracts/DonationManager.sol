@@ -2,11 +2,12 @@
 pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./interface/IV3SwapRouter.sol";
 
-interface IWETH9 is IERC20 {
+interface IWETH is IERC20 {
     /// @notice Deposit ether to get wrapped ether
     function deposit() external payable;
 
@@ -14,16 +15,16 @@ interface IWETH9 is IERC20 {
     function withdraw(uint256) external;
 }
 
-contract DonationManager is Ownable {
-    ISwapRouter public swapRouter;
+contract DonationManager is Ownable, ReentrancyGuard {
+    IV3SwapRouter public swapRouter;
 
     address public constant cbETH = 0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22;
-    address public constant WETH9 = 0x4200000000000000000000000000000000000006;
+    address public constant WETH = 0x4200000000000000000000000000000000000006;
 
     address[3] public adminSigners;
     uint256 public initialETHDeposited;
 
-    mapping(address => uint256 initialDeposit) public deposits;
+    mapping(address => uint256 initialETHDeposit) public deposits;
     mapping(uint256 issueId => Allocation) public allocations;
     
     Withdrawal[] public withdrawals;
@@ -95,11 +96,13 @@ contract DonationManager is Ownable {
         uint256 amount;
         address requester;
         bool approved;
+        bool dispersed;
     }
 
     mapping(uint256 => mapping(address => bool)) public adminApprovals; // requestId => admin address => approval
 
-    event Deposited(address sender, uint256 ethAmount);
+    event Staked(address sender, uint256 ethAmount);
+    event Unstaked(address sender, uint256 cbEthAmount);
     event IssueCreated(uint256 roundId, uint256 issueID);
     event IssueDeactivated(uint256 roundId);
 
@@ -107,24 +110,55 @@ contract DonationManager is Ownable {
         address _swapRouter,
         address[3] memory _adminSigners
     ) Ownable(msg.sender) {
-        swapRouter = ISwapRouter(_swapRouter);
+        swapRouter = IV3SwapRouter(_swapRouter);
         adminSigners = _adminSigners;
     }
 
     receive() external payable {}
 
-    function stake(uint256 ethAmount) external {
+// stake in cbETH stored in the contract
+    function stake(uint256 amountOutMinimum) payable external nonReentrant {
         
-        deposits[msg.sender] += ethAmount;
-        initialETHDeposited += ethAmount;
+        deposits[msg.sender] += msg.value;
+        initialETHDeposited += msg.value;
+
+        require(msg.value > 0, "Must pass non-zero ETH amount");
+
+        // Define swap parameters
+        IV3SwapRouter.ExactInputSingleParams memory params =
+            IV3SwapRouter.ExactInputSingleParams({
+                tokenIn: address(WETH),
+                tokenOut: address(cbETH),
+                fee: 3000,
+                recipient: address(this),
+                amountIn: msg.value,
+                amountOutMinimum: amountOutMinimum,
+                sqrtPriceLimitX96: 0 // No price limit
+            });
+
+        // Execute the swap
+        uint256 amountOut = swapRouter.exactInputSingle{value: msg.value}(params);
+
+        require(amountOut >= amountOutMinimum, "Insufficient output amount");
+
+        emit Staked(msg.sender, msg.value);
     }
 
     // Swap cbETH back to ETH but only return the initial stake, keep the yield in the contract
-    function withdrawETH(uint256 ethAmount) external {
+    function unstake(uint256 ethAmount) external nonReentrant{
         require(deposits[msg.sender] >= ethAmount, "Insufficient ETH balance");
+
+        // Calculate cbETH equivalent of ethAmount
+        uint256 ethToCbETHPrice = getETHToCbETHPrice();
+        uint256 cbETHAmount = (ethAmount * 1e18) / ethToCbETHPrice;
+
+        // Transfer cbETH to the sender
+        require(IERC20(cbETH).transfer(msg.sender, cbETHAmount), "Transfer failed");
 
         deposits[msg.sender] -= ethAmount;
         initialETHDeposited -= ethAmount;
+
+        emit Unstaked(msg.sender, cbETHAmount);
     }
 
     function createRound(
@@ -234,7 +268,7 @@ contract DonationManager is Ownable {
     }
 
     // Request to withdraw cbETH, requiring 3 admin approvals, only yields
-    function withdrawCbETH(uint256 amount) external onlyAdmin {
+    function withdrawCbETH(uint256 amount) external nonReentrant onlyAdmin {
         uint256 currentCbETHBalance = IERC20(cbETH).balanceOf(address(this));
 
         // Calculate the total ETH value of the current cbETH balance in the contract
@@ -258,7 +292,8 @@ contract DonationManager is Ownable {
                 requestId: withdrawals.length + 1,
                 amount: amount,
                 requester: msg.sender,
-                approved: false
+                approved: false,
+                dispersed: false
             })
         );
 
@@ -275,6 +310,13 @@ contract DonationManager is Ownable {
         // Convert sqrtPriceX96 to human-readable price (cbETH per WETH/ETH)
         priceInETH = (uint256(sqrtPriceX96) ** 2) * 1e18 / (2 ** 192);
         return priceInETH;
+    }
+
+    function getETHToCbETHPrice() public view returns (uint256 priceInCbETH) {
+        uint256 cbETHToETHPrice = getCbETHToETHPrice();
+        // Invert the price to get ETH to cbETH price
+        priceInCbETH = 1e18 * 1e18 / cbETHToETHPrice;
+        return priceInCbETH;
     }
 
     // Approve cbETH withdrawal by an admin
@@ -299,21 +341,28 @@ contract DonationManager is Ownable {
         }
     }
 
-    function disperseDonation(address[] calldata recipients, uint256[] calldata values) external onlyAdmin() {
+    function disperseDonation(address[] calldata recipients, uint256[] calldata values, uint256 requestId) external nonReentrant onlyAdmin() {
         if(rounds[roundId].votingEnd > block.timestamp){
             revert HasActiveRound(roundId);
         }
 
+        require(withdrawals[requestId].approved, "Not approved");
+        uint256 totalAmount = 0;
+
         for (uint256 i = 0; i < recipients.length; i++) {
+            totalAmount += values[i];
+            require(totalAmount <= withdrawals[requestId].amount, "Amount exceeds withdrawal amount");
             (bool success, ) = recipients[i].call{value: values[i]}("");
             require(success, "Transfer failed");
         }
 
         rounds[roundId].isActive = false;
+
+        withdrawals[requestId].dispersed = true;
         emit DonationDispersed(roundId);
     }
 
-    function withdrawETH() external onlyOwner {
+    function withdrawETH() external nonReentrant onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, "No ETH balance to withdraw");
 
