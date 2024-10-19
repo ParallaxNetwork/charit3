@@ -3,7 +3,6 @@ pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import { IQuoter } from "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -17,7 +16,6 @@ interface IWETH9 is IERC20 {
 
 contract DonationManager is Ownable {
     ISwapRouter public swapRouter;
-    IQuoter public quoter;
 
     address public constant cbETH = 0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22;
     address public constant WETH9 = 0x4200000000000000000000000000000000000006;
@@ -107,11 +105,9 @@ contract DonationManager is Ownable {
 
     constructor(
         address _swapRouter,
-        address _quoter,
         address[3] memory _adminSigners
     ) Ownable(msg.sender) {
         swapRouter = ISwapRouter(_swapRouter);
-        quoter = IQuoter(_quoter);
         adminSigners = _adminSigners;
     }
 
