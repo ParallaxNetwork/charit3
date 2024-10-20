@@ -3,11 +3,11 @@ import { GetStartedButton } from "@/components/get-started-button"
 
 export default function Home() {
   return (
-    <div className="container pt-6 pb-24 px-4 h-svh overflow-hidden bg-splash">
+    <div className="container pt-6 pb-24 px-4 h-svh bg-splash">
       <main className="flex flex-col items-center text-center">
         <Image
           className=""
-          src="/logo.svg"
+          src="/logo-1.svg"
           alt="logo"
           width={184}
           height={52}

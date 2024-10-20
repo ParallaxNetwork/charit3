@@ -13,7 +13,7 @@ const Nav = () => {
       <div className="flex items-center justify-between gap-3 px-[18px] py-5 border-b border-dark/5 backdrop-blur-[50px]">
         <Image
           className="w-36"
-          src="/logo.svg"
+          src="/logo-1.svg"
           alt="logo"
           width={184}
           height={52}

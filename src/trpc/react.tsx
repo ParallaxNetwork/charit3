@@ -33,7 +33,7 @@ const metadata = {
   name: "Charit3",
   description: "Stake once, donate forever.",
   url: "http://localhost:3000", // origin must match your domain & subdomain
-  icons: [`${env.NEXT_PUBLIC_APP_URL}/logo.svg`],
+  icons: [`${env.NEXT_PUBLIC_APP_URL}/logo-1.svg`],
 }
 
 createAppKit({

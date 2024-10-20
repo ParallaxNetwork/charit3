@@ -15,11 +15,13 @@ const CardResult = ({ title, amount, index, image }: ICardResult) => {
     <>
       <div className="bg-white flex items-start justify-between p-4 border border-dark/20 rounded-xl">
         <div className="flex items-center gap-5">
-          <img
-            src={image}
-            alt={title}
-            className="w-[72px] h-[72px] rounded-full object-cover object-center"
-          />
+          {image ? (
+            <img
+              src={image}
+              alt={title}
+              className="w-[72px] h-[72px] rounded-full object-cover object-center"
+            />
+          ):null}
           <div>
             <p className="font-bold text-sm text-dark">{title}</p>
             <div className="mt-1.5 flex items-center gap-2">
