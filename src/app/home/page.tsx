@@ -8,6 +8,7 @@ import { LuPiggyBank } from "react-icons/lu";
 import { BiDonateHeart } from "react-icons/bi";
 import StakeForm from "@/components/form/stake";
 import CardResult from "@/components/card/result";
+import { WalletButton } from "@/components/wallet-button";
 
 const HomePage = () => {
   // fetch staked amount
