@@ -1,5 +1,5 @@
 import Nav from "@/components/nav"
-import Image from "next/image"
+import Avatar from "boring-avatars"
 import { LuPencil } from "react-icons/lu"
 import { LuWallet } from "react-icons/lu"
 import { LuDollarSign } from "react-icons/lu"
@@ -7,60 +7,64 @@ import { LuTrophy } from "react-icons/lu"
 import { LuPiggyBank } from "react-icons/lu"
 import { BiDonateHeart } from "react-icons/bi"
 import { WalletButton } from "@/components/wallet-button"
+import { getServerAuthSession } from "@/server/auth"
+import { shortAddress } from "@/lib/utils"
 
 import StakeForm from "@/components/form/stake"
 
-const HomePage = () => {
+export default async function HomePage() {
   // fetch staked amount
   // if staked amount is 0, show the stake form
+  const session = await getServerAuthSession()
 
   return (
-    <div className="container bg-splash-dimmed">
+    <div className="bg-splash-dimmed container">
       <Nav />
-      <div className="py-6 px-4 flex flex-col items-center">
-        <Image
-          src="/pfp.jpeg"
-          alt="pfp"
-          width={52}
-          height={52}
-          priority
-          className="w-[72px] h-[72px] rounded-full border border-[#DBDBDB] object-cover object-center"
+      <div className="flex flex-col items-center px-4 py-6">
+        <Avatar
+          size={72}
+          name={session?.user.name}
+          variant="beam"
+          colors={["#dacdac", "#f39708", "#f85741", "#0e9094", "#1e1801"]}
+          className="rounded-full border border-[#DBDBDB]"
         />
-        <div className="flex items-center gap-2 mt-2">
-          <p className="mt-2 text-dark font-bold">Aldi Arif K</p>
-          <LuPencil className="text-dark/40 mt-2" />
+        <div className="mt-2 flex items-center gap-2">
+          <p className="mt-2 font-bold text-dark">
+            {shortAddress(session?.user.address!)}
+          </p>
+          <LuPencil className="mt-2 text-dark/40" />
         </div>
         <div className="mt-5 flex items-center gap-9">
           <WalletButton>
             <div className="text-center">
-              <div className="bg-white w-16 h-16 rounded-full border border-dark/20 flex items-center justify-center">
-                <LuWallet className="text-dark text-3xl" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dark/20 bg-white">
+                <LuWallet className="text-3xl text-dark" />
               </div>
-              <p className="mt-2 text-dark text-sm">Wallet</p>
+              <p className="mt-2 text-sm text-dark">Wallet</p>
             </div>
           </WalletButton>
           <div className="text-center">
-            <div className="bg-white w-16 h-16 rounded-full border border-dark/20 flex items-center justify-center">
-              <LuDollarSign className="text-dark text-3xl" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dark/20 bg-white">
+              <LuDollarSign className="text-3xl text-dark" />
             </div>
-            <p className="mt-2 text-dark text-sm">Stake</p>
+            <p className="mt-2 text-sm text-dark">Stake</p>
           </div>
           <div className="text-center">
-            <div className="bg-white w-16 h-16 rounded-full border border-dark/20 flex items-center justify-center">
-              <LuTrophy className="text-dark text-3xl" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dark/20 bg-white">
+              <LuTrophy className="text-3xl text-dark" />
             </div>
-            <p className="mt-2 text-dark text-sm">Rank</p>
+            <p className="mt-2 text-sm text-dark">Rank</p>
           </div>
         </div>
-        <div className="w-full grid grid-cols-2 gap-3 mt-6">
-          <div className="bg-white border border-dark/20 rounded-2xl text-center flex flex-col items-center gap-4 p-6">
+        <div className="mt-6 grid w-full grid-cols-2 gap-3">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-dark/20 bg-white p-6 text-center">
             <LuPiggyBank className="text-xl" />
-            <p className="text-xl text-dark font-bold">$0.00</p>
-            <div className="badge">Stake Amout</div>
+            <p className="text-xl font-bold text-dark">$0.00</p>
+            <div className="badge">Stake Amount</div>
           </div>
-          <div className="bg-white border border-dark/20 rounded-2xl text-center flex flex-col items-center gap-4 p-6">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-dark/20 bg-white p-6 text-center">
             <BiDonateHeart className="text-xl" />
-            <p className="text-xl text-dark font-bold">$450.00</p>
+            <p className="text-xl font-bold text-dark">$450.00</p>
             <div className="badge">Donation Amount</div>
           </div>
         </div>
@@ -68,27 +72,32 @@ const HomePage = () => {
           <p className="text-base font-medium text-dark">Last Round’s Result</p>
 
           <div className="relative overflow-hidden">
-            <div className="mt-3 grid gap-2 max-h-72 overflow-y-scroll ">
+            <div className="scrollbar-none mt-3 grid max-h-72 gap-2 overflow-y-scroll pb-6">
               {[1, 2, 3, 4, 5].map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white flex items-start justify-between p-4 border border-dark/20 rounded-xl"
+                  className="flex items-start justify-between rounded-xl border border-dark/20 bg-white p-4"
                 >
                   <div>
-                    <p className="font-bold text-sm text-dark">Title topic or headline is here</p>
+                    <p className="text-sm font-bold text-dark">
+                      Title topic or headline is here
+                    </p>
                     <div className="flex items-center gap-2">
                       <BiDonateHeart className="text-sm" />
-                      <p className="font-bold text-sm text-dark">
-                        Total donation : <span className="text-green font-semibold">$1,220.00</span>
+                      <p className="text-sm font-bold text-dark">
+                        Total donation :{" "}
+                        <span className="font-semibold text-green">
+                          $1,220.00
+                        </span>
                       </p>
                     </div>
                   </div>
-                  <p className="font-black text-base text-dark">#{i + 1}</p>
+                  <p className="text-base font-black text-dark">#{i + 1}</p>
                 </div>
               ))}
             </div>
             {[1, 2, 3, 4, 5].length > 3 && (
-              <div className="absolute bg-blur h-44 left-0 right-0 -bottom-20 pointer-events-none"></div>
+              <div className="bg-blur pointer-events-none absolute -bottom-20 left-0 right-0 h-44"></div>
             )}
           </div>
         </div>
@@ -98,5 +107,3 @@ const HomePage = () => {
     </div>
   )
 }
-
-export default HomePage
