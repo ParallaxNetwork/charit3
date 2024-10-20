@@ -23,7 +23,7 @@ export default function Home() {
           height={462}
           priority
         />
-        <p className="text-black font-bold text-[46px] mt-12 ">
+        <p className="text-black font-bold text-[46px] mt-12 leading-tight">
           Stake Once, <br /> Donate Forever.
         </p>
 
