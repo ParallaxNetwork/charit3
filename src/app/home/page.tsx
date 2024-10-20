@@ -30,12 +30,14 @@ const HomePage = () => {
           <LuPencil className="text-dark/40 mt-2" />
         </div>
         <div className="mt-5 flex items-center gap-9">
-          <div className="text-center">
-            <div className="bg-white w-16 h-16 rounded-full border border-dark/20 flex items-center justify-center">
-              <LuWallet className="text-dark text-3xl" />
+          <WalletButton>
+            <div className="text-center">
+              <div className="bg-white w-16 h-16 rounded-full border border-dark/20 flex items-center justify-center">
+                <LuWallet className="text-dark text-3xl" />
+              </div>
+              <p className="mt-2 text-dark text-sm">Wallet</p>
             </div>
-            <p className="mt-2 text-dark text-sm">Wallet</p>
-          </div>
+          </WalletButton>
           <div className="text-center">
             <div className="bg-white w-16 h-16 rounded-full border border-dark/20 flex items-center justify-center">
               <LuDollarSign className="text-dark text-3xl" />
@@ -84,7 +86,7 @@ const HomePage = () => {
         <StakeForm />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default HomePage;
+export default HomePage

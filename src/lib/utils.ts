@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { DateTime } from "luxon";
+import mime from "mime"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -17,3 +18,12 @@ export const countDownTo = (time: number) => {
   const diff = target.diff(now, ["hours", "minutes", "seconds"]);
   return diff.toFormat("hh : mm : ss");
 };
+
+export function checkFileExtension(file: File, types: string[]): boolean {
+  const fileType = mime.getType(file.name)
+  if (!fileType) {
+    return false
+  }
+  const fileExtension = mime.getExtension(fileType)!
+  return types.includes(fileExtension)
+}
