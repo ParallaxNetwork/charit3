@@ -1,6 +1,6 @@
 import Nav from "@/components/nav"
 import Avatar from "boring-avatars"
-import { LuPencil } from "react-icons/lu"
+// import { LuPencil } from "react-icons/lu"
 import { LuWallet } from "react-icons/lu"
 import { LuDollarSign } from "react-icons/lu"
 import { LuTrophy } from "react-icons/lu"
@@ -24,15 +24,15 @@ export default async function HomePage() {
         <Avatar
           size={72}
           name={session?.user.name}
-          variant="beam"
-          colors={["#dacdac", "#f39708", "#f85741", "#0e9094", "#1e1801"]}
+          variant="pixel"
+          colors={["#e7edea", "#ffc52c", "#fb0c06", "#030d4f", "#ceecef"]}
           className="rounded-full border border-[#DBDBDB]"
         />
         <div className="mt-2 flex items-center gap-2">
           <p className="mt-2 font-bold text-dark">
             {shortAddress(session?.user.address!)}
           </p>
-          <LuPencil className="mt-2 text-dark/40" />
+          {/* <LuPencil className="mt-2 text-dark/40" /> */}
         </div>
         <div className="mt-5 flex items-center gap-9">
           <WalletButton>
