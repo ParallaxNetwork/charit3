@@ -1,9 +1,14 @@
 import type { z } from "zod"
 import mongoose, { Schema, type Model } from "mongoose"
-import { type zIssue, categories } from "@/server/schema/issue"
+import {
+  type zIssue,
+  type zIssueWithCreator,
+  categories,
+} from "@/server/schema/issue"
 import User from "./user"
 
 export type TIssue = z.infer<typeof zIssue>
+export type TIssueWithCreator = z.infer<typeof zIssueWithCreator>
 
 const schema: Schema<TIssue> = new Schema<TIssue>(
   {
