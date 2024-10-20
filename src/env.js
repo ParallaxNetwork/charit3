@@ -33,7 +33,7 @@ export const env = createEnv({
     NEXT_PUBLIC_ROOT_DOMAIN: z.string(),
     NEXT_PUBLIC_APP_URL: z.string().url(),
     NEXT_PUBLIC_WC_PROJECT_ID: z.string(),
-    NEXT_PUBLIC_BASE_SEPOLIA: z.string(),
+    NEXT_PUBLIC_CONTRACT_ADDRESS: z.string(),
   },
 
   /**
@@ -48,7 +48,7 @@ export const env = createEnv({
     NEXT_PUBLIC_ROOT_DOMAIN: process.env.NEXT_PUBLIC_ROOT_DOMAIN,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_WC_PROJECT_ID: process.env.NEXT_PUBLIC_WC_PROJECT_ID,
-    NEXT_PUBLIC_BASE_SEPOLIA: process.env.NEXT_PUBLIC_BASE_SEPOLIA,
+    NEXT_PUBLIC_CONTRACT_ADDRESS: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
