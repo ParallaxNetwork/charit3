@@ -1,5 +1,9 @@
 import { getCsrfToken, signIn, signOut, getSession } from "next-auth/react"
-import type { SIWEVerifyMessageArgs, SIWECreateMessageArgs, SIWESession } from "@reown/appkit-siwe"
+import type {
+  SIWEVerifyMessageArgs,
+  SIWECreateMessageArgs,
+  SIWESession,
+} from "@reown/appkit-siwe"
 import { createSIWEConfig, formatMessage } from "@reown/appkit-siwe"
 import { baseSepolia } from "@reown/appkit/networks"
 
@@ -10,7 +14,8 @@ export const siweConfig = createSIWEConfig({
     chains: [baseSepolia.id],
     statement: "Please sign with your account",
   }),
-  createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
+  createMessage: ({ address, ...args }: SIWECreateMessageArgs) =>
+    formatMessage(args, address),
   getNonce: async () => {
     const nonce = await getCsrfToken()
     if (!nonce) {
@@ -54,6 +59,11 @@ export const siweConfig = createSIWEConfig({
     } catch (error) {
       console.log(error)
       return false
+    }
+  },
+  onSignIn: (session) => {
+    if (session) {
+      window.location.replace("/verify")
     }
   },
 })
