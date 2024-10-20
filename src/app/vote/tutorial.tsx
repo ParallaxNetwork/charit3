@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -13,22 +14,22 @@ import { useEffect, useState } from "react"
 
 const tutorials = [
   {
-    title: "Give your vote issue",
+    title: "Give your vote",
     content:
-      "Berikan pendapatmu terhadap sebuah isu dengan cara Swipe kanan untuk “Yes” dan Swipe kiri untuk “No”",
+      'Express your vote on each issue by swiping left for "No" or right for "Yes".',
     image: "/tutorial-1.svg",
   },
   {
-    title: "Send Donation",
+    title: "Send Donation (Coming Soon)",
     content:
-      "Kamu bisa mengirimkan donasi kepada author secara langsung untuk apresiasi",
+      "You can send a donation to the project directly to show your support.",
     image: "/tutorial-2.svg",
   },
   {
     title: "See Final Result",
     content:
-      "Pada akhir vote kamu bisa melihat hasil akhir dari “Top of Donation” dan kamu dapat kembali vote setelah periode time selesai",
-    image: "/tutorial-2.svg",
+      "At the end of the voting period, you can see the final result of the vote.",
+    image: "/tutorial-3.svg",
   },
 ]
 
@@ -68,8 +69,14 @@ const VoteTutorial = () => {
                   hidden: active !== i,
                 })}
               >
-                <div className="mt-5">
-                  <img src={tutorial.image} />
+                <div className="relative mt-5 aspect-[350/252]">
+                  <Image
+                    src={tutorial.image}
+                    alt=""
+                    sizes="100%"
+                    fill={true}
+                    className="select-none object-contain object-center"
+                  />
                 </div>
                 <p className="mt-10 text-center text-2xl font-bold text-dark">
                   {tutorial.title}
