@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/drawer";
 
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const tutorials = [
   {
@@ -34,7 +34,15 @@ const tutorials = [
 
 const VoteTutorial = () => {
   const [active, setActive] = useState(0);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    console.log(localStorage.getItem("tutorial"));
+    if (!localStorage.getItem("tutorial")) {
+      setOpen(true);
+    }
+  }, []);
+
   return (
     <>
       <Drawer open={open} onOpenChange={setOpen}>
@@ -75,6 +83,7 @@ const VoteTutorial = () => {
                 onClick={() => {
                   if (active === tutorials.length - 1) {
                     setOpen(false);
+                    localStorage.setItem("tutorial", "true");
                   }
                   setActive((prev) => prev + 1);
                 }}
@@ -86,6 +95,7 @@ const VoteTutorial = () => {
                   variant="ghost"
                   onClick={() => {
                     setOpen(false);
+                    localStorage.setItem("tutorial", "true");
                   }}
                 >
                   Close
