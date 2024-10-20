@@ -13,7 +13,7 @@ import { Types } from "mongoose"
 import { api } from "@/trpc/react"
 
 import Image from "next/image"
-import { LuMoveLeft, LuImagePlus } from "react-icons/lu"
+import { LuImagePlus } from "react-icons/lu"
 import { Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -30,6 +30,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Dropzone } from "@/components/ui/dropzone"
 import { SortableGrid, SortableGridItem } from "@/components/ui/sortable-grid"
 import NavBack from "../nav-back"
+import { useAccount, useReadContract } from "wagmi"
+import { env } from "@/env"
+import { CONTRACT_ABI_DONATION_MANAGER } from "@/lib/contract"
+import {
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract,
+} from "@wagmi/core"
+import { config } from "@/lib/wagmi"
 
 const zIssueForm = zIssue
   .omit({
@@ -51,6 +60,13 @@ const CreateIssueFormContent = () => {
   const { mutateAsync: createIssue, isPending: isCreatingIssue } =
     api.issue.create.useMutation()
 
+  const { address, chainId } = useAccount()
+  const { data: lastRoundId, isFetched } = useReadContract({
+    abi: CONTRACT_ABI_DONATION_MANAGER,
+    address: env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
+    functionName: "roundId",
+  })
+
   const form = useForm<z.infer<typeof zIssueForm>>({
     resolver: zodResolver(zIssueForm),
     mode: "all",
@@ -69,24 +85,64 @@ const CreateIssueFormContent = () => {
     name: "gallery",
   })
 
+  const contractCreateIssue = async () => {
+    console.log("address", address)
+    console.log("chainId", chainId)
+
+    const { request } = await simulateContract(config, {
+      abi: CONTRACT_ABI_DONATION_MANAGER,
+      address: env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
+      functionName: "createIssue",
+      args: [address],
+    })
+    const hash = await writeContract(config, request)
+
+    console.log("hash", hash)
+
+    const transactionReceipt = await waitForTransactionReceipt(config, {
+      hash,
+    })
+
+    console.log("transactionReceipt", transactionReceipt)
+
+    return transactionReceipt
+  }
+
   function onSubmit(values: z.infer<typeof zIssueForm>) {
     console.log("submit")
     console.log("values", values)
 
-    const createData = {
-      ...values,
-      creator: new Types.ObjectId(session?.user?.id),
-      gallery: values.gallery?.map((item) => item.url) ?? [],
-    }
-
-    console.log("createData", createData)
-
-    toast.promise(createIssue(createData), {
+    toast.promise(contractCreateIssue(), {
       loading: "Creating issue...",
-      success: () => {
-        router.push("/home")
-        form.reset()
-        return "Issue created successfully"
+      success: (txReceipt) => {
+        console.log("txReceipt", txReceipt)
+        // const roundId = txReceipt?.logs?.[0].data.roundId
+        // const issueId = txReceipt?.logs?.[0]?.data
+        const issueId = BigInt(11).toString() ?? null
+
+        const createData = {
+          ...values,
+          creator: new Types.ObjectId(session?.user?.id),
+          gallery: values.gallery?.map((item) => item.url) ?? [],
+          roundId: (lastRoundId as BigInt).toString() ?? null,
+          issueId,
+        }
+
+        console.log("createData", createData)
+
+        return toast.promise(createIssue(createData), {
+          loading: "Saving issue...",
+          success: () => {
+            router.push("/home")
+            form.reset()
+            return "Issue saved successfully"
+          },
+          error: (error) => {
+            console.error("error", error)
+            console.info("issueId", issueId)
+            return `Failed to saved issue: ${error.message}`
+          },
+        })
       },
       error: (error) => {
         return `Failed to create issue: ${error.message}`
@@ -123,7 +179,7 @@ const CreateIssueFormContent = () => {
                         multiple={false}
                       />
                     ) : (
-                      <div className="border-input group relative aspect-[3/4] w-full overflow-hidden rounded-md border bg-shade-white">
+                      <div className="group relative aspect-[3/4] w-full overflow-hidden rounded-md border border-input bg-shade-white">
                         <Image
                           src={field.value}
                           alt=""
@@ -131,7 +187,7 @@ const CreateIssueFormContent = () => {
                           sizes="100%"
                           className="object-cover object-center"
                         />
-                        <div className="bg-foreground/40 absolute inset-0 hidden items-center justify-center group-hover:flex">
+                        <div className="absolute inset-0 hidden items-center justify-center bg-foreground/40 group-hover:flex">
                           <Button
                             type="button"
                             variant="destructive"
@@ -244,7 +300,7 @@ const CreateIssueFormContent = () => {
                 <div className="grid w-full grid-flow-row grid-cols-3 gap-2">
                   {gallery.fields.map((field, index) => (
                     <SortableGridItem key={field.id} value={field.id} asChild>
-                      <div className="border-input group relative aspect-square cursor-grab overflow-hidden rounded-md border bg-shade-white">
+                      <div className="group relative aspect-square cursor-grab overflow-hidden rounded-md border border-input bg-shade-white">
                         <Image
                           src={field.url}
                           alt=""
