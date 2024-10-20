@@ -1,4 +1,4 @@
-import VoteForm from "@/components/form/vote";
+import VoteForm from "@/components/vote";
 import Nav from "@/components/nav";
 import React from "react";
 

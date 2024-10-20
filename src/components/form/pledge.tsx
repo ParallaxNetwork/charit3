@@ -1,0 +1,119 @@
+"use client";
+
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { LuDollarSign } from "react-icons/lu";
+
+const formSchema = z.object({
+  amount: z.string(),
+});
+
+const PledgeForm = () => {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      amount: "",
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log(values);
+  }
+  return (
+    <>
+      <Drawer>
+        <DrawerTrigger asChild>
+          <button className="btn-pledge shrink-0 hover:scale-105 transition-transform active:scale-100">
+            <svg
+              width="58"
+              height="58"
+              viewBox="0 0 58 58"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M29 52.5772C42.0213 52.5772 52.5772 42.0214 52.5772 29C52.5772 15.9787 42.0213 5.42278 29 5.42278C15.9786 5.42278 5.42273 15.9787 5.42273 29C5.42273 42.0214 15.9786 52.5772 29 52.5772Z"
+                fill="white"
+                stroke="white"
+                stroke-width="1.95122"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M38.4309 19.5691H24.2845C23.0339 19.5691 21.8345 20.0659 20.9502 20.9502C20.0659 21.8346 19.5691 23.034 19.5691 24.2846C19.5691 25.5352 20.0659 26.7346 20.9502 27.6189C21.8345 28.5032 23.0339 29 24.2845 29H33.7154C34.9661 29 36.1654 29.4968 37.0498 30.3811C37.9341 31.2655 38.4309 32.4649 38.4309 33.7155C38.4309 34.9661 37.9341 36.1655 37.0498 37.0498C36.1654 37.9341 34.9661 38.4309 33.7154 38.4309H19.5691"
+                stroke="#3DB8F5"
+                stroke-width="1.95122"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M29 43.1464V14.8537"
+                stroke="#3DB8F5"
+                stroke-width="1.95122"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </DrawerTrigger>
+        <DrawerContent className="container px-4 pb-6">
+          <div className="border border-dark/20 rounded-2xl p-6 mt-14">
+            <p className="text-dark font-bold text-2xl text-center">
+              Send Donation
+            </p>
+            <p className="text-dark text-sm mt-2 text-center">
+              The following conditions must be met to proceed.
+            </p>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y- mt-8"
+              >
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold text-dark text-sm">
+                        Amount
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <LuDollarSign className="text-lg font-bold text-dark absolute top-4 left-3.5" />
+                          <Input
+                            type="number"
+                            placeholder="Input amount you want to donate"
+                            className="pl-10"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="mt-6 w-full rounded-full">
+                  Stake
+                </Button>
+              </form>
+            </Form>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+};
+
+export default PledgeForm;

@@ -2,9 +2,8 @@
 
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import React, { Suspense } from "react";
-import { LuMoveLeft } from "react-icons/lu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -21,6 +20,7 @@ import { LuImagePlus } from "react-icons/lu";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import NavBack from "../nav-back";
 
 const categoryTopics = [
   "Property & Hunger",
@@ -75,7 +75,6 @@ const formSchema = z.object({
 
 const CreateIssueFormContent = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -114,19 +113,7 @@ const CreateIssueFormContent = () => {
 
   return (
     <div className="container">
-      <div className="relative px-4 py-6 border-b border-dark/20">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            router.push(searchParams.get("from") || "/home");
-          }}
-          className="absolute"
-        >
-          <LuMoveLeft className="text-2xl" />
-        </Button>
-        <p className="text-2xl text-dark font-bold text-center">Create Issue</p>
-      </div>
+      <NavBack title="Create Issue" />
       <div className="px-4 py-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">

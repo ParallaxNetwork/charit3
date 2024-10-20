@@ -6,8 +6,8 @@ import { LuDollarSign } from "react-icons/lu";
 import { LuTrophy } from "react-icons/lu";
 import { LuPiggyBank } from "react-icons/lu";
 import { BiDonateHeart } from "react-icons/bi";
-
 import StakeForm from "@/components/form/stake";
+import CardResult from "@/components/card/result";
 
 const HomePage = () => {
   // fetch staked amount
@@ -67,26 +67,12 @@ const HomePage = () => {
           <div className="relative overflow-hidden">
             <div className="mt-3 grid gap-2 max-h-72 overflow-y-scroll ">
               {[1, 2, 3, 4, 5].map((_, i) => (
-                <div
+                <CardResult
                   key={i}
-                  className="bg-white flex items-start justify-between p-4 border border-dark/20 rounded-xl"
-                >
-                  <div>
-                    <p className="font-bold text-sm text-dark">
-                      Title topic or headline is here
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <BiDonateHeart className="text-sm" />
-                      <p className="font-bold text-sm text-dark">
-                        Total donation :{" "}
-                        <span className="text-green font-semibold">
-                          $1,220.00
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <p className="font-black text-base text-dark">#{i + 1}</p>
-                </div>
+                  title="Title topic or headline is here"
+                  amount={1220}
+                  index={i}
+                />
               ))}
             </div>
             {[1, 2, 3, 4, 5].length > 3 && (
