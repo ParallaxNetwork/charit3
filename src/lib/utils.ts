@@ -14,3 +14,7 @@ export function checkFileExtension(file: File, types: string[]): boolean {
   const fileExtension = mime.getExtension(fileType)!
   return types.includes(fileExtension)
 }
+
+export function shortAddress(address: string): string {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
+}
