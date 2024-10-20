@@ -1,12 +1,21 @@
-"use client";
+"use client"
 
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense } from "react";
-import { LuMoveLeft } from "react-icons/lu";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { z } from "zod"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm, useFieldArray } from "react-hook-form"
+import { zIssue, categories } from "@/server/schema/issue"
+import { cn } from "@/lib/utils"
+import { toast } from "sonner"
+import { Types } from "mongoose"
+import { api } from "@/trpc/react"
+
+import Image from "next/image"
+import { LuMoveLeft, LuImagePlus } from "react-icons/lu"
+import { Trash2Icon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -14,153 +23,137 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import { LuImagePlus } from "react-icons/lu";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Dropzone } from "@/components/ui/dropzone"
+import { SortableGrid, SortableGridItem } from "@/components/ui/sortable-grid"
 
-const categoryTopics = [
-  "Property & Hunger",
-  "Education & Youth Development",
-  "Health & Wellness",
-  "Environment Conservation",
-  "Animal Welfare",
-  "Human Rights & Social Justice",
-  "Disaster & Emergency Relief",
-  "NGO Support",
-];
-
-const MAX_SUPPORTING_IMAGE = 6;
-
-const formSchema = z.object({
-  thumbnailImage:
-    typeof window === "undefined"
-      ? z.any()
-      : z
-          .instanceof(FileList)
-          .refine((file) => file?.length == 1, "Thumnail image is required."),
-  issueName: z.string(),
-  categoryTopic: z.enum(
-    [
-      categoryTopics[0],
-      categoryTopics[1],
-      categoryTopics[2],
-      categoryTopics[3],
-      categoryTopics[4],
-      categoryTopics[5],
-      categoryTopics[6],
-      categoryTopics[7],
-    ],
-    {
-      required_error: "You need to select a category topic.",
-    }
-  ),
-  description: z.string(),
-  supportingImage:
-    typeof window === "undefined"
-      ? z.any()
-      : z
-          .array(z.instanceof(File))
-          .refine(
-            (files) => files?.length <= MAX_SUPPORTING_IMAGE,
-            "Supporting image should not exceed " +
-              MAX_SUPPORTING_IMAGE +
-              " files."
-          ),
-  // typeof window === "undefined" ? z.any() : z.array(z.instanceof(FileList)),
-});
+const zIssueForm = zIssue
+  .omit({
+    _id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    gallery: z
+      .array(z.object({ url: z.string() }))
+      .max(6)
+      .optional(),
+  })
 
 const CreateIssueFormContent = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { data: session } = useSession()
+  const { mutateAsync: createIssue, isPending: isCreatingIssue } =
+    api.issue.create.useMutation()
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof zIssueForm>>({
+    resolver: zodResolver(zIssueForm),
+    mode: "all",
     defaultValues: {
-      thumbnailImage: undefined,
-      issueName: "",
-      categoryTopic: "",
+      thumbnail: undefined,
+      name: "",
+      category: undefined,
       description: "",
-      supportingImage: undefined,
+      gallery: [],
+      creator: new Types.ObjectId(session?.user?.id),
     },
-  });
+  })
 
-  const thumbnailImageRef = form.register("thumbnailImage");
-  const supportingImageRef = form.register("supportingImage");
+  const gallery = useFieldArray({
+    control: form.control,
+    name: "gallery",
+  })
 
-  const { toast } = useToast();
+  function onSubmit(values: z.infer<typeof zIssueForm>) {
+    console.log("submit")
+    console.log("values", values)
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-
-    try {
-      toast({
-        title: "Success",
-        description: "Issue created successfully",
-      });
-      router.push("/home");
-    } catch (error) {
-      console.log(error);
-      toast({
-        title: "Error",
-        description: "Failed to create issue",
-        variant: "destructive",
-      });
+    const createData = {
+      ...values,
+      creator: new Types.ObjectId(session?.user?.id),
+      gallery: values.gallery?.map((item) => item.url) ?? [],
     }
+
+    console.log("createData", createData)
+
+    toast.promise(createIssue(createData), {
+      loading: "Creating issue...",
+      success: () => {
+        router.push("/home")
+        form.reset()
+        return "Issue created successfully"
+      },
+      error: (error) => {
+        return `Failed to create issue: ${error.message}`
+      },
+    })
   }
+
+  useEffect(() => {
+    console.log("session", session)
+    console.log("form errors:", form.formState.errors)
+  }, [form, session])
 
   return (
     <div className="container">
-      <div className="relative px-4 py-6 border-b border-dark/20">
+      <div className="relative border-b border-dark/20 px-4 py-6">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => {
-            router.push(searchParams.get("from") || "/home");
+            router.push(searchParams.get("from") ?? "/home")
           }}
           className="absolute"
         >
           <LuMoveLeft className="text-2xl" />
         </Button>
-        <p className="text-2xl text-dark font-bold text-center">Create Issue</p>
+        <p className="text-center text-2xl font-bold text-dark">Create Issue</p>
       </div>
       <div className="px-4 py-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">
             <FormField
               control={form.control}
-              name="thumbnailImage"
+              name="thumbnail"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-semibold text-dark text-sm">
+                  <FormLabel className="text-sm font-semibold text-dark">
                     Thumbnail Image (ratio 3:4)
-                    <div className="mt-2 flex items-center justify-center bg-shade-white border-dashed border border-dark-grey rounded-lg px-6 py-6">
-                      {field.value?.length ? (
-                        <img
-                          src={URL.createObjectURL(field.value[0])}
-                          alt="thumbnail"
-                          className="w-1/2 h-1/2 object-cover object-center rounded-lg"
-                        />
-                      ) : (
-                        <>
-                          <LuImagePlus className="text-dark-grey text-xl" />
-                          <p className="text-dark-grey font-medium pl-2.5">
-                            Upload cover image
-                          </p>
-                        </>
-                      )}
-                    </div>
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      {...thumbnailImageRef}
-                    />
+                    {!field.value ? (
+                      <Dropzone
+                        onChange={field.onChange}
+                        className="aspect-[3/4] w-full bg-shade-white"
+                        extensions={["png", "jpg", "jpeg"]}
+                        maxSize={1000 * 1024} // in Kilobytes
+                        multiple={false}
+                      />
+                    ) : (
+                      <div className="border-input group relative aspect-[3/4] w-full overflow-hidden rounded-md border bg-shade-white">
+                        <Image
+                          src={field.value}
+                          alt=""
+                          fill={true}
+                          sizes="100%"
+                          className="object-cover object-center"
+                        />
+                        <div className="bg-foreground/40 absolute inset-0 hidden items-center justify-center group-hover:flex">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => field.onChange(null)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -168,10 +161,10 @@ const CreateIssueFormContent = () => {
             />
             <FormField
               control={form.control}
-              name="issueName"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-semibold text-dark text-sm">
+                  <FormLabel className="text-sm font-semibold text-dark">
                     Issue Name
                   </FormLabel>
                   <FormControl>
@@ -188,7 +181,7 @@ const CreateIssueFormContent = () => {
             />
             <FormField
               control={form.control}
-              name="categoryTopic"
+              name="category"
               render={({ field }) => (
                 <FormItem className="space-y-3">
                   <FormLabel>Select Category Topic</FormLabel>
@@ -198,7 +191,7 @@ const CreateIssueFormContent = () => {
                       defaultValue={field.value}
                       className="flex flex-col space-y-1"
                     >
-                      {categoryTopics.map((topic, i) => (
+                      {categories.map((topic, i) => (
                         <FormItem
                           key={i}
                           className="flex items-center space-y-0"
@@ -209,11 +202,11 @@ const CreateIssueFormContent = () => {
                           <FormLabel className="w-full">
                             <div
                               className={cn(
-                                "rounded-lg px-3 py-3.5 text-dark font-medium bg-shade-white text-center",
+                                "rounded-lg bg-shade-white px-3 py-3.5 text-center font-medium text-dark",
                                 {
                                   "border border-blue bg-blue/10 text-blue":
                                     field.value === topic,
-                                }
+                                },
                               )}
                             >
                               {topic}
@@ -232,13 +225,17 @@ const CreateIssueFormContent = () => {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-semibold text-dark text-sm">
+                  <FormLabel className="text-sm font-semibold text-dark">
                     Description
                   </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Input Description"
                       className=""
+                      autoCorrect="off"
+                      autoComplete="off"
+                      spellCheck="false"
+                      rows={12}
                       {...field}
                     />
                   </FormControl>
@@ -246,108 +243,79 @@ const CreateIssueFormContent = () => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="supportingImage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-semibold text-dark text-sm">
-                    Supporting Image
-                    <div className="mt-2 flex gap-2 flex-wrap">
-                      {field.value?.length ? (
-                        Array.from(field.value).map(
-                          (file: unknown, i: number) => (
-                            <img
-                              key={i}
-                              src={URL.createObjectURL(file as File)}
-                              alt="thumbnail"
-                              className="w-[124px] h-[124px] object-cover object-center rounded-lg bg-shade-white"
-                            />
-                          )
-                        )
-                      ) : (
-                        <>
-                          <div className="w-[124px] h-[124px] object-cover object-center rounded-lg bg-shade-white"></div>
-                          <div className="w-[124px] h-[124px] object-cover object-center rounded-lg bg-shade-white"></div>
-                        </>
-                      )}
-                      {field.value?.length !== MAX_SUPPORTING_IMAGE && (
-                        <div className="w-[124px] h-[124px] rounded-lg border-dashed border-dark-grey bg-shade-white text-center gap-2 flex flex-col items-center justify-center">
-                          <LuImagePlus className="text-dark-grey text-xl" />
-                          <p className="text-dark-grey font-medium pl-2.5">
-                            Add image
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      multiple
-                      {...supportingImageRef}
-                      onChange={(e) => {
-                        // TODO: issue onchange not firinging when selecting same files
+            <FormItem>
+              <FormLabel>Gallery</FormLabel>
+              <SortableGrid
+                id="event-gallery"
+                value={gallery.fields}
+                onMove={({ activeIndex, overIndex }) =>
+                  gallery.move(activeIndex, overIndex)
+                }
+              >
+                <div className="grid w-full grid-flow-row grid-cols-3 gap-2">
+                  {gallery.fields.map((field, index) => (
+                    <SortableGridItem key={field.id} value={field.id} asChild>
+                      <div className="border-input group relative aspect-square cursor-grab overflow-hidden rounded-md border bg-shade-white">
+                        <Image
+                          src={field.url}
+                          alt=""
+                          fill={true}
+                          sizes="100%"
+                          className="object-contain object-center"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon-sm"
+                          onClick={() => gallery.remove(index)}
+                          className="absolute right-1 top-1 hidden group-hover:flex"
+                        >
+                          <Trash2Icon className="size-4" />
+                        </Button>
+                      </div>
+                    </SortableGridItem>
+                  ))}
 
-                        // if e.target.files length is 0, it means user has removed all files
-                        // so we need to set the value to undefined
-                        if (!e.target.files?.length) {
-                          field.onChange(undefined);
-                          return;
-                        }
-
-                        // max selected files length is MAX_SUPPORTING_IMAGE
-                        if (e.target.files?.length > MAX_SUPPORTING_IMAGE) {
-                          return;
-                        }
-
-                        // if user has added 6 files, what ever user select next, we need to save it
-                        if (field.value?.length === MAX_SUPPORTING_IMAGE) {
-                          field.onChange(Array.from(e.target.files));
-                          return;
-                        }
-
-                        // if user has added files, we need to set the value to the files
-                        if (field.value?.length) {
-                          const fileList = e.target.files as FileList;
-
-                          //   slice the files to the remaining files that can be added
-                          const remainingFiles = Array.from(fileList).slice(
-                            0,
-                            MAX_SUPPORTING_IMAGE - field.value.length
-                          );
-
-                          // if user has already added files, we need to append the new files to the existing files
-                          field.onChange([...field.value, ...remainingFiles]);
-                          return;
-                        }
-
-                        field.onChange(Array.from(e.target.files));
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full rounded-full">
-              Submit
+                  {gallery.fields.length < 6 && (
+                    <Dropzone
+                      onChange={(value) =>
+                        gallery.append({ url: value as string })
+                      }
+                      className="aspect-square bg-shade-white"
+                      extensions={["png", "jpg", "jpeg"]}
+                      maxSize={750 * 1024} // in Kilobytes
+                      multiple={false}
+                      droppable={false}
+                    >
+                      <div className="flex flex-col items-center">
+                        <LuImagePlus className="text-xl" />
+                        <p className="pl-2.5 font-medium">Add image</p>
+                      </div>
+                    </Dropzone>
+                  )}
+                </div>
+              </SortableGrid>
+            </FormItem>
+            <Button
+              type="submit"
+              className="w-full rounded-full"
+              disabled={isCreatingIssue || !form.formState.isValid || !session}
+            >
+              {isCreatingIssue ? "Creating Issue..." : "Create Issue"}
             </Button>
           </form>
         </Form>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const CreateIssueForm = () => {
   return (
     <Suspense>
       <CreateIssueFormContent />
     </Suspense>
-  );
-};
+  )
+}
 
-export default CreateIssueForm;
+export default CreateIssueForm

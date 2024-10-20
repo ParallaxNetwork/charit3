@@ -14,6 +14,7 @@ export const networks = [baseSepolia]
 
 //Set up the Wagmi Adapter (Config)
 export const wagmiAdapter = new WagmiAdapter({
+  chains: [baseSepolia],
   storage: createStorage({
     storage: cookieStorage,
   }),

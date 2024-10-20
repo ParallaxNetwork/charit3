@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import localFont from "next/font/local"
 import "./globals.css"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/sonner"
 import { Provider } from "@/trpc/react"
 
 const interFont = localFont({
@@ -115,10 +115,12 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${interFont.variable} antialiased font-[family-name:var(--font-inter)]`}>
+      <body
+        className={`${interFont.variable} font-[family-name:var(--font-inter)] antialiased`}
+      >
         <Provider cookies={cookies}>
           {children}
-          <Toaster />
+          <Toaster position="bottom-center" />
         </Provider>
       </body>
     </html>
