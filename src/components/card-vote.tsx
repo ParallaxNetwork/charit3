@@ -1,27 +1,23 @@
+import { TUser } from "@/server/models/user";
 import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion";
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import { useState } from "react";
 
-type TracksData = {
-  name: string;
-  artist: string;
-  img: string;
-};
 
 export type CardData = {
-  id: number;
+  _id: string;
   name: string;
-  src: StaticImageData | string;
-  age: number;
-  bio: string;
-  genre: string[];
-  tracks: TracksData[];
+  description: string;
+  thumbnail: string;
+  gallery: string[];
+  creator: TUser;
+  category: string;
 };
 
 export type CardProps = {
   data: CardData;
   active: boolean;
-  removeCard: (id: number, action: "right" | "left") => void;
+  removeCard: (_id: string, action: "right" | "left") => void;
 };
 
 const CardVote = ({ data, active, removeCard }: CardProps) => {
@@ -40,10 +36,10 @@ const CardVote = ({ data, active, removeCard }: CardProps) => {
 
     if (info.offset.x > 100) {
       setExitX(200);
-      removeCard(data.id, "right");
+      removeCard(data._id, "right");
     } else if (info.offset.x < -100) {
       setExitX(-200);
-      removeCard(data.id, "left");
+      removeCard(data._id, "left");
     }
   };
 
@@ -69,7 +65,7 @@ const CardVote = ({ data, active, removeCard }: CardProps) => {
           <div className="absolute w-full h-full rounded-2xl overflow-hidden">
             <div className="relative h-full w-full">
               <Image
-                src={data.src}
+                src={data.thumbnail}
                 fill
                 alt=""
                 style={{

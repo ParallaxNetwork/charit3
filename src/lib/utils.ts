@@ -39,3 +39,7 @@ export function fileToBase64(file?: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
+
+export const shortAddress = (address: string) => {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
