@@ -1,8 +1,12 @@
-"use client";
+"use client"
 
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { useGlobalStore } from "@/stores/global"
+
+import { Button } from "@/components/ui/button"
+import { Drawer, DrawerContent } from "@/components/ui/drawer"
 import {
   Form,
   FormControl,
@@ -10,39 +14,34 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { LuDollarSign } from "react-icons/lu";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { LuDollarSign } from "react-icons/lu"
 
 const formSchema = z.object({
   amount: z.string(),
-});
+})
 
 const StakeForm = () => {
+  const { showStakeForm, setShowStakeForm } = useGlobalStore()
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       amount: "",
     },
-  });
+  })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    console.log(values)
   }
   return (
     <>
-      <Drawer>
-        <DrawerTrigger asChild>
-          <Button className="w-full rounded-full mt-2">Vote Donation</Button>
-        </DrawerTrigger>
+      <Drawer open={showStakeForm} onOpenChange={setShowStakeForm}>
         <DrawerContent className="container px-4 pb-6">
-          <div className="border border-dark/20 rounded-2xl p-6 mt-14">
-            <p className="text-dark font-bold text-2xl text-center">
-              Stake to continue
-            </p>
-            <p className="text-dark text-sm mt-2 text-center">
+          <div className="mt-8 rounded-2xl border border-dark/20 p-6">
+            <p className="text-center text-2xl font-bold text-dark">Stake</p>
+            <p className="mt-2 text-center text-sm text-dark">
               The following conditions must be met to proceed.
             </p>
             <Form {...form}>
@@ -55,12 +54,12 @@ const StakeForm = () => {
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-semibold text-dark text-sm">
+                      <FormLabel className="text-sm font-semibold text-dark">
                         Amount
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <LuDollarSign className="text-lg font-bold text-dark absolute top-4 left-3.5" />
+                          <LuDollarSign className="absolute left-3.5 top-4 text-lg font-bold text-dark" />
                           <Input
                             type="number"
                             placeholder="Input amount you want to donate"
@@ -82,7 +81,7 @@ const StakeForm = () => {
         </DrawerContent>
       </Drawer>
     </>
-  );
-};
+  )
+}
 
-export default StakeForm;
+export default StakeForm
