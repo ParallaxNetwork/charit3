@@ -49,8 +49,8 @@ const VoteForm = () => {
   }, [apiCarousel])
 
   const activeIndex = cards?.length - 1
-  const removeCard = (id: string, action: "right" | "left") => {
-    setCards((prev) => prev.filter((card, i) => card._id !== id))
+  const removeCard = (issueId: string | null, action: "right" | "left") => {
+    setCards((prev) => prev.filter((card, i) => card.issueId !== issueId))
     if (action === "right") {
       setRightSwipe((prev) => prev + 1)
     } else {

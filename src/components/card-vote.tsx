@@ -1,47 +1,41 @@
-import { TUser } from "@/server/models/user";
-import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion";
-import Image from "next/image";
-import { useState } from "react";
+import { TIssue } from "@/server/models/issue"
+import { TUser } from "@/server/models/user"
+import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion"
+import Image from "next/image"
+import { useState } from "react"
 
-
-export type CardData = {
-  _id: string;
-  name: string;
-  description: string;
-  thumbnail: string;
-  gallery: string[];
-  creator: TUser;
-  category: string;
-};
+export type CardData = TIssue & {
+  creator: TUser
+}
 
 export type CardProps = {
-  data: CardData;
-  active: boolean;
-  removeCard: (_id: string, action: "right" | "left") => void;
-};
+  data: CardData
+  active: boolean
+  removeCard: (issueId: string | null, action: "right" | "left") => void
+}
 
 const CardVote = ({ data, active, removeCard }: CardProps) => {
-  const [exitX, setExitX] = useState(0);
+  const [exitX, setExitX] = useState(0)
 
-  const x = useMotionValue(0);
+  const x = useMotionValue(0)
   // const input = [-200, 0, 200];
-  const rotate = useTransform(x, [-200, 200], [-25, 25]);
-  const opacity = useTransform(x, [-200, -125, 0, 125, 200], [0, 1, 1, 1, 0]);
+  const rotate = useTransform(x, [-200, 200], [-25, 25])
+  const opacity = useTransform(x, [-200, -125, 0, 125, 200], [0, 1, 1, 1, 0])
 
   const dragEnd = (
     e: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
+    info: PanInfo,
   ) => {
-    console.log(info.offset.x);
+    console.log(info.offset.x)
 
     if (info.offset.x > 100) {
-      setExitX(200);
-      removeCard(data._id, "right");
+      setExitX(200)
+      removeCard(data.issueId, "right")
     } else if (info.offset.x < -100) {
-      setExitX(-200);
-      removeCard(data._id, "left");
+      setExitX(-200)
+      removeCard(data.issueId, "left")
     }
-  };
+  }
 
   return (
     <>
@@ -50,7 +44,7 @@ const CardVote = ({ data, active, removeCard }: CardProps) => {
         <motion.div
           drag="x"
           dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-          className="absolute z-30 flex w-[calc(100%-64px)] h-[72vh] text-3xl font-bold"
+          className="absolute z-30 flex h-[72vh] w-[calc(100%-64px)] text-3xl font-bold"
           onDragEnd={dragEnd}
           initial={{ scale: 0.95, opacity: 0.5 }}
           animate={{
@@ -62,7 +56,7 @@ const CardVote = ({ data, active, removeCard }: CardProps) => {
           whileDrag={{ cursor: "grabbing" }}
           exit={{ x: exitX }}
         >
-          <div className="absolute w-full h-full rounded-2xl overflow-hidden">
+          <div className="absolute h-full w-full overflow-hidden rounded-2xl">
             <div className="relative h-full w-full">
               <Image
                 src={data.thumbnail}
@@ -115,7 +109,7 @@ const CardVote = ({ data, active, removeCard }: CardProps) => {
         })}
       </div> */}
     </>
-  );
-};
+  )
+}
 
-export default CardVote;
+export default CardVote
