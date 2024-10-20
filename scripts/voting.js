@@ -116,33 +116,29 @@ async function main() {
     console.log("-".repeat(30));
 
     // Voter 1: votes all yes (issues 1-5)
-    await donationManager.connect(voter1).voteYes(createBitmap([1, 2, 3, 4, 5])); // Yes to All
+    await donationManager.connect(voter1).voteYes(createPledgeBitmap([1, 2, 3, 4, 5], [1, 1, 1, 1, 1])); // Yes to all issues
 
     // Voter 2: votes all no (issues 1-5)
-    await donationManager.connect(voter2).voteNo(createBitmap([1, 2, 3, 4, 5])); // No to All
+    await donationManager.connect(voter2).voteNo(createBitmap([1, 2, 3, 4, 5])); // No to all issues
 
     // Voter 3: votes in two sessions
-    // First session: yes to issue 1, 3, no to issue 2
-    await donationManager.connect(voter3).voteYes(createBitmap([1, 4])); // Yes to 1 and 3
-    await donationManager.connect(voter3).voteNo(createBitmap([2]));     // No to 2
+    // First session: yes to issue 1 and 3, no to issue 2
+    await donationManager.connect(voter3).voteYes(createPledgeBitmap([1, 3], [1, 1])); // Yes to issue 1 and 3
+    await donationManager.connect(voter3).voteNo(createBitmap([2]));                   // No to issue 2
 
-
-    const unvotedIssues = await getUnvotedIssues(await donationManager.userVotesBitmap(voter3.address, 1), 1, 5);
-    console.log(`User ${voter3.address} has note voted on issues: ${unvotedIssues}`);
-
-    // Second session: yes to issue 4, no to issue 5
-    await donationManager.connect(voter3).voteYes(createBitmap([3])); // Yes to 4
-    await donationManager.connect(voter3).voteNo(createBitmap([5]));  // No to 5
+    // Voter 3 pledges 3 for issue 4 in the second session
+    await donationManager.connect(voter3).voteYes(createPledgeBitmap([4], [3]));       // Pledge 3 for issue 4
+    await donationManager.connect(voter3).voteNo(createBitmap([5]));                   // No to issue 5
 
     // Voter 4: votes in two sessions
-    // First session: yes to 1, 2, 3
-    await donationManager.connect(voter4).voteYes(createBitmap([1, 2, 3]));
-    // Second session: no to 4, 5
-    await donationManager.connect(voter4).voteNo(createBitmap([4, 5]));
+    // First session: yes to issue 1, 2, 3
+    await donationManager.connect(voter4).voteYes(createPledgeBitmap([1, 2, 3], [1, 1, 1])); // Yes to issues 1, 2, 3
+    // Second session: no to issue 4 and 5
+    await donationManager.connect(voter4).voteNo(createBitmap([4, 5]));                     // No to issues 4 and 5
 
     // Voter 5: votes in 1 session
-    // Yes to 1, 2, 5, No to 3, 4
-    await donationManager.connect(voter5).voteYes(createBitmap([1, 2, 5]));
+    // Yes to issue 1, 2, 5, No to issue 3, 4
+    await donationManager.connect(voter5).voteYes(createPledgeBitmap([1, 2, 5], [4, 2, 1])); // Pledge 4 for issue 1 and 2, Yes for issue 5
     await donationManager.connect(voter5).voteNo(createBitmap([3, 4]));
 
     console.log("-".repeat(30));
@@ -187,24 +183,22 @@ async function main() {
     for (const voter of uniqueVoters) {
         const yesVotesBitmap = await donationManager.userYesVotes(voter, roundId);
 
-        // Convert the BigInt to a binary string
-        const binaryString = (yesVotesBitmap.toString(2)).padStart(issueCount, '0'); // Ensure it's padded to the correct length
-        // console.log(binaryString);
-
-        // Loop through each issue and check the corresponding bit in the binary string
+        // Convert the BigInt to a binary string (we don't actually need the binary string, we work with the 4-bit groups)
         for (let issueId = 1; issueId <= issueCount; issueId++) {
-            const bitIndex = issueCount - issueId; // Get the corresponding index in the binary string
+            const shiftAmount = (issueId - 1) * 4; // Each issue's vote is stored in 4 bits
 
-            // If the bitIndex is out of bounds, continue to the next iteration
-            if (bitIndex < 0 || bitIndex >= binaryString.length) {
-                continue;
-            }
+            // Extract the 4-bit value for the current issue
+            const voteValue = (yesVotesBitmap >> BigInt(shiftAmount)) & BigInt(0xF); // Extract 4 bits (0xF is 1111 in binary)
 
-            // Check if the bit is set to '1' (meaning a YES vote)
-            if (binaryString[bitIndex] === '1') {
-                totalYesVotesPerIssue[issueId - 1] += 1; // Increment YES vote count for the issueId
+            // Convert the extracted value to a number (this will be between 0 and 11, with 11 representing 'B')
+            const voteCount = Number(voteValue);
+            console.log(`Voter ${voter} voted YES ${voteCount} times for issue ${issueId}`);
+
+            if (voteCount > 0) {
+                totalYesVotesPerIssue[issueId - 1] += voteCount; // Add the vote count to the issue's total
             }
         }
+        console.log();
     }
 
     // Log total YES votes per issue ID
@@ -224,6 +218,29 @@ function createBitmap(issueIds) {
         bitmap |= BigInt(1) << BigInt(issueId - 1); // Set the bit for the given issueId
     });
     return bitmap;
+}
+
+// Function to create a bitmap for votes (with votes being between 1 and B)
+function createPledgeBitmap(issueIds, votes) {
+    if (issueIds.length !== votes.length) {
+        throw new Error("Issue IDs and votes length mismatch.");
+    }
+
+    let bitmap = BigInt(0); // Initialize bitmap as BigInt to represent the full uint256 bitmap
+
+    issueIds.forEach((issueId, index) => {
+        const voteValue = votes[index];
+
+        // Ensure the vote/pledge value is valid (between 1 and B, hexadecimal 0x1 to 0xB)
+        if (voteValue < 1 || voteValue > 11) {
+            throw new Error(`Vote value for issue ${issueId} is out of range (1 to B).`);
+        }
+
+        // Shift and OR the vote value in the correct position (use 4 bits for each vote)
+        bitmap |= BigInt(voteValue) << BigInt((issueId - 1) * 4); // Shift by 4 bits per issue
+    });
+
+    return bitmap; // Return the bitmap representing the votes/pledges
 }
 
 async function getUnvotedIssues(votesBitmap, startIssueId, issueCount) {
