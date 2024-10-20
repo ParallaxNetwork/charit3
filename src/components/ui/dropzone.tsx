@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useRef, useState } from "react"
-import { cn, checkFileExtension } from "@/lib/utils"
+import { cn, checkFileExtension, fileToBase64 } from "@/lib/utils"
 
 import { toast } from "sonner"
 
@@ -60,7 +60,7 @@ export function Dropzone({
   }
 
   // Function to handle processing of uploaded files
-  const handleFiles = (files: FileList) => {
+  const handleFiles = async (files: FileList) => {
     if (!files.length) {
       toast.error("No file uploaded")
       return
@@ -94,10 +94,12 @@ export function Dropzone({
       }
     }
 
-    const returnValue = !multiple
-      ? URL.createObjectURL(files[0]!)
-      : Array.from(files).map((file) => URL.createObjectURL(file))
-
+    // const returnValue = !multiple
+    //   ? URL.createObjectURL(files[0]!)
+    //   : Array.from(files).map((file) => URL.createObjectURL(file))
+    // returnValue as base64
+    const returnValue = !multiple ? await fileToBase64(files[0]) : await Promise.all(Array.from(files).map(fileToBase64))
+    
     onChange(returnValue!)
   }
 
