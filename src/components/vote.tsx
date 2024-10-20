@@ -1,40 +1,43 @@
 "use client"
 
-import CardVote from "@/components/card-vote"
-import { CardData } from "@/components/card-vote"
+import { useEffect, useState, useMemo } from "react"
 import { AnimatePresence } from "framer-motion"
-import { useEffect, useState } from "react"
-import { LuCircleDollarSign } from "react-icons/lu"
+import { useBeforeUnload } from "@/hooks/useBeforeUnload"
+
+import Image from "next/image"
+import CardVote from "@/components/card-vote"
+import type { TIssueWithCreator } from "@/server/models/issue"
 import {
+  type CarouselApi,
   Carousel,
-  CarouselApi,
   CarouselContent,
   CarouselItem,
 } from "./ui/carousel"
 import { cn, shortAddress } from "@/lib/utils"
 import PledgeForm from "./form/pledge"
 
+import { FaSpinner } from "react-icons/fa6"
+import { LuCircleDollarSign } from "react-icons/lu"
 import { api } from "@/trpc/react"
 import Avatar from "boring-avatars"
-import { FaSpinner } from "react-icons/fa6"
 
 const VoteForm = () => {
-  const { fetchStatus, data, isLoading, isSuccess } =
-    api.issue.getAll.useQuery()
-  console.log("data", data, fetchStatus)
+  const { data, isLoading, isFetched } = api.issue.getAll.useQuery()
 
-  const [cards, setCards] = useState<CardData[]>(data as any)
+  const [firstSwipe, setFirstSwipe] = useState(false)
+  const [cards, setCards] = useState<TIssueWithCreator[]>([])
   const [rightSwipe, setRightSwipe] = useState(0) // eslint-disable-line @typescript-eslint/no-unused-vars
   const [leftSwipe, setLeftSwipe] = useState(0) // eslint-disable-line @typescript-eslint/no-unused-vars
   const [apiCarousel, setApiCarousel] = useState<CarouselApi>()
   const [selectedScrollSnap, setSelectedScrollSnap] = useState(0)
 
+  useBeforeUnload(firstSwipe)
+
   useEffect(() => {
-    if (!isSuccess) {
-      return
+    if (isFetched && data) {
+      setCards(data)
     }
-    setCards(data as any)
-  }, [isSuccess])
+  }, [isFetched, data])
 
   useEffect(() => {
     if (!apiCarousel) {
@@ -48,14 +51,18 @@ const VoteForm = () => {
     })
   }, [apiCarousel])
 
-  const activeIndex = cards?.length - 1
+  const activeIndex = useMemo(() => {
+    return cards?.length - 1
+  }, [cards])
+
   const removeCard = (issueId: string | null, action: "right" | "left") => {
-    setCards((prev) => prev.filter((card, i) => card.issueId !== issueId))
+    setCards((prev) => prev.filter((card) => card.issueId !== issueId))
     if (action === "right") {
       setRightSwipe((prev) => prev + 1)
     } else {
       setLeftSwipe((prev) => prev + 1)
     }
+    setFirstSwipe(true)
     setSelectedScrollSnap(0)
   }
 
@@ -91,11 +98,11 @@ const VoteForm = () => {
       >
         <AnimatePresence>
           {cards?.length ? (
-            cards?.map((card, i) => (
+            cards?.map((card, index) => (
               <CardVote
-                key={i}
+                key={card._id.toString()}
                 data={card}
-                active={i === activeIndex}
+                active={index === activeIndex}
                 removeCard={removeCard}
               />
             ))
@@ -111,12 +118,11 @@ const VoteForm = () => {
         </AnimatePresence>
       </div>
 
-      {cards?.length ? (
-        cards?.map((card, i) =>
-          activeIndex === i ? (
-            <>
+      {cards?.length
+        ? cards?.map((card, index) =>
+            activeIndex === index ? (
               <div
-                key={i}
+                key={card._id.toString()}
                 className="relative z-40 mt-0 bg-white px-4 pb-10 pt-3"
               >
                 <div className="flex justify-center">
@@ -150,29 +156,31 @@ const VoteForm = () => {
                 <div className="mt-12 p-1">
                   <Carousel setApi={setApiCarousel}>
                     <CarouselContent>
-                      {(card.gallery || []).map((_, i) => (
-                        <CarouselItem key={i}>
-                          <img src={card.gallery[i]} alt="carousel" />
+                      {card.gallery.map((_, g) => (
+                        <CarouselItem key={`gallery-${g}`}>
+                          <div className="relative aspect-square">
+                            <Image
+                              src={card.gallery[g]!}
+                              alt="carousel"
+                              sizes="100%"
+                              fill={true}
+                              className="object-cover object-center"
+                            />
+                          </div>
                         </CarouselItem>
                       ))}
                     </CarouselContent>
-                    {/* <CarouselPrevious />
-              <CarouselNext /> */}
                   </Carousel>
                   <div className="mt-3 flex items-center justify-center gap-1.5">
-                    {" "}
-                    {(card.gallery || []).map((_, i) => (
-                      <div
-                        key={i}
-                        onClick={() => apiCarousel?.scrollTo(i)}
-                        className={cn(
-                          "h-1.5 w-1.5 rounded-full hover:cursor-pointer",
-                          {
-                            "bg-dark": selectedScrollSnap === i,
-                            "bg-[#CBCBCB]": selectedScrollSnap !== i,
-                          },
-                        )}
-                      ></div>
+                    {card.gallery.map((_, g) => (
+                      <button
+                        key={g}
+                        onClick={() => apiCarousel?.scrollTo(g)}
+                        className={cn("h-1.5 w-1.5 rounded-full", {
+                          "bg-dark": selectedScrollSnap === g,
+                          "bg-[#CBCBCB]": selectedScrollSnap !== g,
+                        })}
+                      />
                     ))}
                   </div>
                 </div>
@@ -185,13 +193,6 @@ const VoteForm = () => {
                 <div className="mt-10">
                   <div className="inline-block">
                     <div className="flex items-center gap-2 rounded-lg bg-shade-white px-3 py-2">
-                      {/* <Image
-                  src="/pfp.jpeg"
-                  width={32}
-                  height={32}
-                  alt="pfp"
-                  className="w-8 h-8 rounded-full object-cover object-center"
-                /> */}
                       <Avatar
                         size={32}
                         name={card.creator.name}
@@ -212,14 +213,13 @@ const VoteForm = () => {
                   </div>
                 </div>
               </div>
-            </>
-          ) : null,
-        )
-      ) : isLoading ? (
-        <h2 className="text-textGrey text-center text-2xl font-bold">...</h2>
-      ) : (
-        <></>
-      )}
+            ) : null,
+          )
+        : isLoading && (
+            <h2 className="text-textGrey text-center text-2xl font-bold">
+              ...
+            </h2>
+          )}
     </div>
   )
 }
