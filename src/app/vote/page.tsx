@@ -1,6 +1,7 @@
 import VoteForm from "@/components/vote";
 import Nav from "@/components/nav";
 import React from "react";
+import VoteTutorial from "./tutorial";
 
 const VotePage = () => {
   return (
@@ -9,6 +10,7 @@ const VotePage = () => {
       <div className="min-h-screen">
         <VoteForm />
       </div>
+      <VoteTutorial />
     </div>
   );
 };
