@@ -15,12 +15,14 @@ import { Input } from "@/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { LuDollarSign } from "react-icons/lu"
+import { CardData } from "../card-vote"
+import { setVoteLocalStorage } from "@/lib/utils"
 
 const formSchema = z.object({
   amount: z.string(),
 })
 
-const PledgeForm = () => {
+const PledgeForm = ({ issue }: { issue: CardData }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -29,7 +31,7 @@ const PledgeForm = () => {
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
+    setVoteLocalStorage(issue.issueId ?? "", Number(values.amount))
   }
   return (
     <>
@@ -70,24 +72,20 @@ const PledgeForm = () => {
         </DrawerTrigger>
         <DrawerContent className="container px-4 pb-6">
           <div className="relative mt-14 rounded-2xl border border-dark/20 p-6">
-            <p className="absolute inset-0 z-10 flex items-center justify-center text-center text-2xl font-bold text-dark">
-              Coming soon
-            </p>
-            <p className="text-center text-2xl font-bold text-dark blur-lg">
+            <p className="text-center text-2xl font-bold text-dark blur-none">
               Send Donation
             </p>
-            <p className="mt-2 text-center text-sm text-dark blur-lg">
+            <p className="mt-2 text-center text-sm text-dark blur-none">
               The following conditions must be met to proceed.
             </p>
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y- mt-8 blur-lg"
+                className="space-y- mt-8 blur-none"
               >
                 <FormField
                   control={form.control}
                   name="amount"
-                  disabled
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-semibold text-dark">

@@ -2,7 +2,7 @@ import { z } from "zod"
 import { objectIdSchema } from "./global"
 
 export const categories = [
-  "Property & Hunger",
+  "Poverty & Hunger",
   "Education & Youth Development",
   "Health & Wellness",
   "Environment Conservation",

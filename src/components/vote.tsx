@@ -11,16 +11,45 @@ import {
   CarouselContent,
   CarouselItem,
 } from "./ui/carousel"
-import { cn, shortAddress } from "@/lib/utils"
+import {
+  cn,
+  createBitmap,
+  createPledgeBitmap,
+  retrieveVoteNoFromLocalStorage,
+  retrieveVoteYesFromLocalStorage,
+  setVoteLocalStorage,
+  setVoteRoundLocalStorage,
+  shortAddress,
+} from "@/lib/utils"
 import PledgeForm from "./form/pledge"
 
 import { api } from "@/trpc/react"
 import Avatar from "boring-avatars"
 import { FaSpinner } from "react-icons/fa6"
+import { useAccount, useReadContract } from "wagmi"
+import { CONTRACT_ABI_DONATION_MANAGER } from "@/lib/contract"
+import { env } from "@/env"
+
+import {
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract,
+} from "@wagmi/core"
+import { config } from "@/lib/wagmi"
+import { toast } from "sonner"
 
 const VoteForm = () => {
-  const { fetchStatus, data, isLoading, isSuccess } =
-    api.issue.getAll.useQuery()
+  // console.log("ini swipe", {
+  //   no: retrieveVoteNoFromLocalStorage(),
+  //   yes: retrieveVoteYesFromLocalStorage(),
+  // })
+  // const votedIssueIds = getVotedIssueIdsLocalStorage()
+  // console.log("votedIssueIds", votedIssueIds)
+
+  const { fetchStatus, data, isLoading, isSuccess } = api.issue.getAll
+    .useQuery
+    // { votedIssueIds },
+    ()
   console.log("data", data, fetchStatus)
 
   const [cards, setCards] = useState<CardData[]>(data as any)
@@ -29,12 +58,20 @@ const VoteForm = () => {
   const [apiCarousel, setApiCarousel] = useState<CarouselApi>()
   const [selectedScrollSnap, setSelectedScrollSnap] = useState(0)
 
+  const { address, chainId } = useAccount()
+  const { data: roundId, isSuccess: roundIdIsSuccess } = useReadContract({
+    abi: CONTRACT_ABI_DONATION_MANAGER,
+    address: env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
+    functionName: "roundId",
+  })
+
   useEffect(() => {
-    if (!isSuccess) {
+    if (!roundIdIsSuccess || !isSuccess) {
       return
     }
+    setVoteRoundLocalStorage(roundId as number)
     setCards(data as any)
-  }, [isSuccess])
+  }, [isSuccess, roundIdIsSuccess])
 
   useEffect(() => {
     if (!apiCarousel) {
@@ -50,25 +87,103 @@ const VoteForm = () => {
 
   const activeIndex = cards?.length - 1
   const removeCard = (issueId: string | null, action: "right" | "left") => {
-    setCards((prev) => prev.filter((card, i) => card.issueId !== issueId))
+    let _cards = [...cards]
+    setCards((prev) => {
+      const newCards = prev.filter((card, i) => card.issueId !== issueId)
+      _cards = newCards
+      return newCards
+    })
     if (action === "right") {
       setRightSwipe((prev) => prev + 1)
+      setVoteLocalStorage(issueId ?? "", 1)
     } else {
       setLeftSwipe((prev) => prev + 1)
+      setVoteLocalStorage(issueId ?? "", 0)
     }
     setSelectedScrollSnap(0)
+
+    // last swipe
+    if (_cards.length === 0) {
+      console.log("last swipe", {
+        no: retrieveVoteNoFromLocalStorage(),
+        yes: retrieveVoteYesFromLocalStorage(),
+      })
+
+      toast.promise(doVoteYes(), {
+        loading: "Voting Yes...",
+        success: (txReceipt) => {
+          // toast.success("Voted Yes: " + txReceipt?.transactionHash)
+          // return toast.promise(doVoteNo(), {
+          //   loading: "Voting No...",
+          //   success: (txReceipt) => {
+          //     return "Voted No: " + txReceipt?.transactionHash
+          //   },
+          //   error: (error) => {
+          //     console.error("error", error)
+          //     return "Error Voting No"
+          //   },
+          // })
+
+          return "Voted Yes: " + txReceipt?.transactionHash
+        },
+        error: (error) => {
+          console.error("error", error)
+          return "Error Voting Yes"
+        },
+      })
+    }
   }
 
-  // const stats = [
-  //   {
-  //     name: "Left",
-  //     count: leftSwipe,
-  //   },
-  //   {
-  //     name: "Right",
-  //     count: rightSwipe,
-  //   },
-  // ];
+  const doVoteYes = async () => {
+    try {
+      const voteYes = retrieveVoteYesFromLocalStorage()
+      const _createPledgeBitmap = createPledgeBitmap(
+        voteYes[0] as number[],
+        voteYes[1] as number[],
+      )
+
+      const { request } = await simulateContract(config, {
+        abi: CONTRACT_ABI_DONATION_MANAGER,
+        address: env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
+        functionName: "voteYes",
+        args: [_createPledgeBitmap],
+      })
+      const hash = await writeContract(config, request)
+
+      const transactionReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      })
+
+      return transactionReceipt
+    } catch (error) {
+      console.error("error", error)
+      return
+    }
+  }
+
+  const doVoteNo = async () => {
+    try {
+      const voteNo = retrieveVoteNoFromLocalStorage()
+      const _createBitmap = createBitmap(voteNo)
+
+      const { request } = await simulateContract(config, {
+        abi: CONTRACT_ABI_DONATION_MANAGER,
+        address: env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
+        functionName: "voteNo",
+        args: [_createBitmap],
+      })
+      const hash = await writeContract(config, request)
+
+      const transactionReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      })
+
+      return transactionReceipt
+    } catch (error) {
+      console.error("error", error)
+      return
+    }
+  }
 
   return (
     <div className="relative">
@@ -114,105 +229,101 @@ const VoteForm = () => {
       {cards?.length ? (
         cards?.map((card, i) =>
           activeIndex === i ? (
-            <>
-              <div
-                key={i}
-                className="relative z-40 mt-0 bg-white px-4 pb-10 pt-3"
-              >
-                <div className="flex justify-center">
-                  <svg
-                    width="60"
-                    height="8"
-                    viewBox="0 0 60 8"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect width="60" height="8" rx="4" fill="#CBCBCB" />
-                  </svg>
-                </div>
-                <div className="mt-7 flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-[26px] font-bold text-dark">
-                      {card.name}
-                    </p>
-                    <div className="mt-6">
-                      <div className="badge">
-                        <div className="flex items-center gap-1">
-                          <LuCircleDollarSign />
-                          {card.category}
-                        </div>
+            <div
+              key={i}
+              className="relative z-40 mt-0 bg-white px-4 pb-10 pt-3"
+            >
+              <div className="flex justify-center">
+                <svg
+                  width="60"
+                  height="8"
+                  viewBox="0 0 60 8"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect width="60" height="8" rx="4" fill="#CBCBCB" />
+                </svg>
+              </div>
+              <div className="mt-7 flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-[26px] font-bold text-dark">{card.name}</p>
+                  <div className="mt-6">
+                    <div className="badge">
+                      <div className="flex items-center gap-1">
+                        <LuCircleDollarSign />
+                        {card.category}
                       </div>
                     </div>
                   </div>
-                  <PledgeForm />
                 </div>
+                <PledgeForm issue={card} />
+              </div>
 
-                <div className="mt-12 p-1">
-                  <Carousel setApi={setApiCarousel}>
-                    <CarouselContent>
-                      {(card.gallery || []).map((_, i) => (
-                        <CarouselItem key={i}>
-                          <img src={card.gallery[i]} alt="carousel" />
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    {/* <CarouselPrevious />
-              <CarouselNext /> */}
-                  </Carousel>
-                  <div className="mt-3 flex items-center justify-center gap-1.5">
-                    {" "}
+              <div className="mt-12 p-1">
+                <Carousel setApi={setApiCarousel}>
+                  <CarouselContent>
                     {(card.gallery || []).map((_, i) => (
-                      <div
-                        key={i}
-                        onClick={() => apiCarousel?.scrollTo(i)}
-                        className={cn(
-                          "h-1.5 w-1.5 rounded-full hover:cursor-pointer",
-                          {
-                            "bg-dark": selectedScrollSnap === i,
-                            "bg-[#CBCBCB]": selectedScrollSnap !== i,
-                          },
-                        )}
-                      ></div>
+                      <CarouselItem key={i}>
+                        <img src={card.gallery[i]} alt="carousel" />
+                      </CarouselItem>
                     ))}
-                  </div>
+                  </CarouselContent>
+                  {/* <CarouselPrevious />
+              <CarouselNext /> */}
+                </Carousel>
+                <div className="mt-3 flex items-center justify-center gap-1.5">
+                  {" "}
+                  {(card.gallery || []).map((_, i) => (
+                    <div
+                      key={i}
+                      onClick={() => apiCarousel?.scrollTo(i)}
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full hover:cursor-pointer",
+                        {
+                          "bg-dark": selectedScrollSnap === i,
+                          "bg-[#CBCBCB]": selectedScrollSnap !== i,
+                        },
+                      )}
+                    ></div>
+                  ))}
                 </div>
+              </div>
 
-                <div className="mt-6">
-                  {/* below is description in markdown format? */}
-                  {card.description}
-                </div>
+              <div className="mt-6">
+                {/* below is description in markdown format? */}
+                {card.description}
+              </div>
 
-                <div className="mt-10">
-                  <div className="inline-block">
-                    <div className="flex items-center gap-2 rounded-lg bg-shade-white px-3 py-2">
-                      {/* <Image
+              <div className="mt-10">
+                <div className="inline-block">
+                  <div className="flex items-center gap-2 rounded-lg bg-shade-white px-3 py-2">
+                    {/* <Image
                   src="/pfp.jpeg"
                   width={32}
                   height={32}
                   alt="pfp"
                   className="w-8 h-8 rounded-full object-cover object-center"
                 /> */}
-                      <Avatar
-                        size={32}
-                        name={card.creator.name}
-                        variant="pixel"
-                        colors={[
-                          "#e7edea",
-                          "#ffc52c",
-                          "#fb0c06",
-                          "#030d4f",
-                          "#ceecef",
-                        ]}
-                        className="rounded-full border border-[#DBDBDB]"
-                      />
-                      <p className="text-dark">
-                        {shortAddress(card.creator.name ?? "")} - Creator Issue
-                      </p>
-                    </div>
+                    <Avatar
+                      size={32}
+                      name={card.creator.name}
+                      variant="pixel"
+                      colors={[
+                        "#e7edea",
+                        "#ffc52c",
+                        "#fb0c06",
+                        "#030d4f",
+                        "#ceecef",
+                      ]}
+                      className="rounded-full border border-[#DBDBDB]"
+                    />
+                    <p className="text-dark">
+                      {shortAddress(card.creator.name ?? "")} - Creator Issue
+                    </p>
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           ) : null,
         )
       ) : isLoading ? (

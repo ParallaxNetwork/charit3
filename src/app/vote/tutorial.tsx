@@ -38,7 +38,7 @@ const VoteTutorial = () => {
 
   useEffect(() => {
     console.log(localStorage.getItem("tutorial"))
-    if (!localStorage.getItem("tutorial")) {
+    if (localStorage.getItem("tutorial") !== "true") {
       setOpen(true)
     }
   }, [])
