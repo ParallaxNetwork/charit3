@@ -19,7 +19,8 @@ import Avatar from "boring-avatars"
 import { FaSpinner } from "react-icons/fa6"
 
 const VoteForm = () => {
-  const { fetchStatus, data, isLoading } = api.issue.getAll.useQuery()
+  const { fetchStatus, data, isLoading, isSuccess } =
+    api.issue.getAll.useQuery()
   console.log("data", data, fetchStatus)
 
   const [cards, setCards] = useState<CardData[]>(data as any)
@@ -29,8 +30,11 @@ const VoteForm = () => {
   const [selectedScrollSnap, setSelectedScrollSnap] = useState(0)
 
   useEffect(() => {
+    if (!isSuccess) {
+      return
+    }
     setCards(data as any)
-  }, [data])
+  }, [isSuccess])
 
   useEffect(() => {
     if (!apiCarousel) {
@@ -79,7 +83,12 @@ const VoteForm = () => {
         </div>
       ) : null}
 
-      <div className="flex h-[80vh] justify-center overflow-hidden bg-[#F4F4F4] pt-7">
+      <div
+        className={cn("flex justify-center overflow-hidden bg-[#F4F4F4] pt-7", {
+          "h-[80vh]": cards?.length,
+          "h-[100vh]": !cards?.length,
+        })}
+      >
         <AnimatePresence>
           {cards?.length ? (
             cards?.map((card, i) => (
@@ -91,11 +100,11 @@ const VoteForm = () => {
               />
             ))
           ) : isLoading ? (
-            <h2 className="text-textGrey absolute z-10 h-full text-center text-2xl font-bold">
+            <h2 className="text-textGrey absolute inset-0 z-10 flex items-center justify-center text-center text-2xl font-bold">
               ...
             </h2>
           ) : (
-            <h2 className="text-textGrey absolute z-10 h-full text-center text-2xl font-bold">
+            <h2 className="text-textGrey absolute inset-0 z-10 flex items-center justify-center text-center text-2xl font-bold">
               You have voted all issues
             </h2>
           )}
