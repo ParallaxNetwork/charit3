@@ -30,7 +30,7 @@ interface IWETH is IERC20 {
  * @dev Manages ETH donations, staking, voting on issues, and handling yield withdrawals using cbETH via Uniswap V3.
  * Inherits from OpenZeppelin's Ownable for access control and ReentrancyGuard to prevent reentrancy attacks.
  */
-contract DonationManager is Ownable, ReentrancyGuard {
+contract DonationManagerVoting is Ownable, ReentrancyGuard {
     /// @notice Instance of the Uniswap V3 SwapRouter interface.
     IV3SwapRouter public swapRouter;
 

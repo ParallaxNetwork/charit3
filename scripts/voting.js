@@ -42,6 +42,9 @@ async function main() {
     );
     const donationManagerAddress = await donationManager.getAddress();
 
+    console.log("DonationManager deployed to:", await donationManager.getAddress());
+    console.log("-".repeat(30));
+
     // THIS MINTING ONLY FOR MOCKING
     const mintAmount = ethers.parseEther("1000"); // 1000 tokens
 
@@ -60,12 +63,6 @@ async function main() {
     await mintCbETHToRouterTx.wait();
     console.log(`Minted 1000 cbETH to MockSwapRouter`);
     console.log("-".repeat(30));
-
-
-
-    console.log("DonationManager deployed to:", await donationManager.getAddress());
-    console.log("-".repeat(30));
-
 
     // Create a round (start immediately, ends in 2 days)
     const currentTimestamp = await time.latest();

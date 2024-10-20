@@ -13,6 +13,11 @@ module.exports = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 8453,  // Chain ID for Base mainnet
     },
+    baseSep: {
+      url: process.env.BASE_SEPOLIA_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 84532,  // Chain ID for Base Sepolia
+    },
   },
   etherscan: {
     apiKey: process.env.BASESCAN_API_KEY,  // Optional: For contract verification
