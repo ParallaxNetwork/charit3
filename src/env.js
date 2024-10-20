@@ -7,20 +7,21 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-    NEXTAUTH_SECRET: process.env.NODE_ENV === "production" ? z.string() : z.string().optional(),
+    NODE_ENV: z
+      .enum(["development", "test", "production"])
+      .default("development"),
+    NEXTAUTH_SECRET:
+      process.env.NODE_ENV === "production"
+        ? z.string()
+        : z.string().optional(),
     NEXTAUTH_URL: z.preprocess(
       // This makes Vercel deployments not fail if you don't set NEXTAUTH_URL
       // Since NextAuth.js automatically uses the VERCEL_URL if present.
       (str) => process.env.VERCEL_URL ?? str,
       // VERCEL_URL doesn't include `https` so it cant be validated as a URL
-      process.env.VERCEL ? z.string() : z.string().url()
+      process.env.VERCEL ? z.string() : z.string().url(),
     ),
     MONGODB_URI: z.string(),
-    // DO_SPACES_ACCESS_KEY: z.string(),
-    // DO_SPACES_SECRET_KEY: z.string(),
-    // DO_SPACES_ORIGIN_URL: z.string().url(),
-    // DO_SPACES_BUCKET_NAME: z.string(),
   },
 
   /**
@@ -32,7 +33,7 @@ export const env = createEnv({
     NEXT_PUBLIC_ROOT_DOMAIN: z.string(),
     NEXT_PUBLIC_APP_URL: z.string().url(),
     NEXT_PUBLIC_WC_PROJECT_ID: z.string(),
-    // NEXT_PUBLIC_DO_SPACES_CDN_URL: z.string().url(),
+    NEXT_PUBLIC_BASE_SEPOLIA: z.string(),
   },
 
   /**
@@ -44,14 +45,10 @@ export const env = createEnv({
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     MONGODB_URI: process.env.MONGODB_URI,
-    // DO_SPACES_ACCESS_KEY: process.env.DO_SPACES_ACCESS_KEY,
-    // DO_SPACES_SECRET_KEY: process.env.DO_SPACES_SECRET_KEY,
-    // DO_SPACES_ORIGIN_URL: process.env.DO_SPACES_ORIGIN_URL,
-    // DO_SPACES_BUCKET_NAME: process.env.DO_SPACES_BUCKET_NAME,
     NEXT_PUBLIC_ROOT_DOMAIN: process.env.NEXT_PUBLIC_ROOT_DOMAIN,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_WC_PROJECT_ID: process.env.NEXT_PUBLIC_WC_PROJECT_ID,
-    // NEXT_PUBLIC_DO_SPACES_CDN_URL: process.env.NEXT_PUBLIC_DO_SPACES_CDN_URL,
+    NEXT_PUBLIC_BASE_SEPOLIA: process.env.NEXT_PUBLIC_BASE_SEPOLIA,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
