@@ -20,6 +20,8 @@ export const zIssue = z.object({
   description: z.string(),
   gallery: z.array(z.string()).max(6),
   creator: objectIdSchema,
+  issueId: z.number(),
+  roundId: z.number(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 })

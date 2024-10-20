@@ -33,6 +33,14 @@ const schema: Schema<TIssue> = new Schema<TIssue>(
       ref: User,
       required: true,
     },
+    issueId: {
+      type: Number,
+      required: true,
+    },
+    roundId: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true },
 )
