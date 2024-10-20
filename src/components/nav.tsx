@@ -1,18 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import React from "react";
 import { Button } from "./ui/button";
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogDescription,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogTrigger,
-// } from "@/components/ui/dialog";
+import { usePathname, useRouter } from "next/navigation";
 
-type Props = {};
-
-const Nav = (props: Props) => {
+const Nav = () => {
+  const router = useRouter();
+  const currentPath = usePathname();
   return (
     <>
       <div className="flex items-center justify-between gap-3 px-[18px] py-5 border-b border-dark/5 backdrop-blur-[50px]">
@@ -25,21 +20,16 @@ const Nav = (props: Props) => {
           priority
         />
 
-        <Button size="sm">Create Issue</Button>
-        {/* <Dialog>
-          <DialogTrigger asChild>
-            <Button size="sm">Create Issue</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Are you absolutely sure?</DialogTitle>
-              <DialogDescription>
-                This action cannot be undone. This will permanently delete your
-                account and remove your data from our servers.
-              </DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog> */}
+        <Button
+          size="sm"
+          onClick={() => {
+            const query = new URLSearchParams();
+            query.set("from", currentPath);
+            router.push("/create-issue" + "?" + query.toString());
+          }}
+        >
+          Create Issue
+        </Button>
       </div>
     </>
   );
