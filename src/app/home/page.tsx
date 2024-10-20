@@ -1,13 +1,14 @@
-import Nav from "@/components/nav";
-import Image from "next/image";
-import { LuPencil } from "react-icons/lu";
-import { LuWallet } from "react-icons/lu";
-import { LuDollarSign } from "react-icons/lu";
-import { LuTrophy } from "react-icons/lu";
-import { LuPiggyBank } from "react-icons/lu";
-import { BiDonateHeart } from "react-icons/bi";
+import Nav from "@/components/nav"
+import Image from "next/image"
+import { LuPencil } from "react-icons/lu"
+import { LuWallet } from "react-icons/lu"
+import { LuDollarSign } from "react-icons/lu"
+import { LuTrophy } from "react-icons/lu"
+import { LuPiggyBank } from "react-icons/lu"
+import { BiDonateHeart } from "react-icons/bi"
+import { WalletButton } from "@/components/wallet-button"
 
-import StakeForm from "@/components/form/stake";
+import StakeForm from "@/components/form/stake"
 
 const HomePage = () => {
   // fetch staked amount
@@ -30,12 +31,14 @@ const HomePage = () => {
           <LuPencil className="text-dark/40 mt-2" />
         </div>
         <div className="mt-5 flex items-center gap-9">
-          <div className="text-center">
-            <div className="bg-white w-16 h-16 rounded-full border border-dark/20 flex items-center justify-center">
-              <LuWallet className="text-dark text-3xl" />
+          <WalletButton>
+            <div className="text-center">
+              <div className="bg-white w-16 h-16 rounded-full border border-dark/20 flex items-center justify-center">
+                <LuWallet className="text-dark text-3xl" />
+              </div>
+              <p className="mt-2 text-dark text-sm">Wallet</p>
             </div>
-            <p className="mt-2 text-dark text-sm">Wallet</p>
-          </div>
+          </WalletButton>
           <div className="text-center">
             <div className="bg-white w-16 h-16 rounded-full border border-dark/20 flex items-center justify-center">
               <LuDollarSign className="text-dark text-3xl" />
@@ -72,16 +75,11 @@ const HomePage = () => {
                   className="bg-white flex items-start justify-between p-4 border border-dark/20 rounded-xl"
                 >
                   <div>
-                    <p className="font-bold text-sm text-dark">
-                      Title topic or headline is here
-                    </p>
+                    <p className="font-bold text-sm text-dark">Title topic or headline is here</p>
                     <div className="flex items-center gap-2">
                       <BiDonateHeart className="text-sm" />
                       <p className="font-bold text-sm text-dark">
-                        Total donation :{" "}
-                        <span className="text-green font-semibold">
-                          $1,220.00
-                        </span>
+                        Total donation : <span className="text-green font-semibold">$1,220.00</span>
                       </p>
                     </div>
                   </div>
@@ -98,7 +96,7 @@ const HomePage = () => {
         <StakeForm />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default HomePage;
+export default HomePage

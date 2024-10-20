@@ -1,11 +1,9 @@
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import Link from "next/link";
-import { FaArrowRight } from "react-icons/fa6";
+import Image from "next/image"
+import { GetStartedButton } from "@/components/get-started-button"
 
 export default function Home() {
   return (
-    <div className="container pt-6 pb-24 px-4 min-h-screen bg-splash">
+    <div className="container pt-6 pb-24 px-4 h-svh overflow-hidden bg-splash">
       <main className="flex flex-col items-center text-center">
         <Image
           className=""
@@ -27,13 +25,8 @@ export default function Home() {
           Stake Once, <br /> Donate Forever.
         </p>
 
-        <Link href="/verify">
-          <Button variant="default" size="lg" className="mt-12 rounded-full">
-            Get Started
-            <FaArrowRight className="ml-2" />
-          </Button>
-        </Link>
+        <GetStartedButton />
       </main>
     </div>
-  );
+  )
 }

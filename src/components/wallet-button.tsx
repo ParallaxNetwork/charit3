@@ -1,12 +1,9 @@
 "use client"
 
-// import { useAccount, useConnect, useDisconnect } from "wagmi"
-// import { Button } from "@/components/ui/button"
+import { useAppKit } from "@reown/appkit/react"
 
-export function WalletButton() {
-  // const account = useAccount()
-  // const { connectors, connect, status, error } = useConnect()
-  // const { disconnect } = useDisconnect()
+export function WalletButton({ children }: { children: React.ReactNode }) {
+  const { open } = useAppKit()
 
-  return <p>Wallet</p>
+  return <button onClick={() => open()}>{children}</button>
 }

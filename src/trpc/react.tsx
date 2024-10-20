@@ -1,12 +1,18 @@
 "use client"
 
+import { useState } from "react"
 import { SessionProvider } from "next-auth/react"
+import SuperJSON from "superjson"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { createAppKit } from "@reown/appkit/react"
+import { baseSepolia } from "@reown/appkit/networks"
+import { cookieToInitialState, WagmiProvider, type Config } from "wagmi"
 import { loggerLink, unstable_httpBatchStreamLink } from "@trpc/client"
 import { createTRPCReact } from "@trpc/react-query"
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server"
-import { useState } from "react"
-import SuperJSON from "superjson"
+import { wagmiAdapter, projectId } from "@/lib/wagmi"
+import { siweConfig } from "@/lib/siwe"
+import { env } from "@/env"
 
 import { type AppRouter } from "@/server/api/root"
 
@@ -21,6 +27,27 @@ const getQueryClient = () => {
   // Browser: use singleton pattern to keep the same query client
   return (clientQueryClientSingleton ??= createQueryClient())
 }
+
+// Set up metadata
+const metadata = {
+  name: "Charit3",
+  description: "Stake once, donate forever.",
+  url: "http://localhost:3000", // origin must match your domain & subdomain
+  icons: [`${env.NEXT_PUBLIC_APP_URL}/logo.svg`],
+}
+
+createAppKit({
+  adapters: [wagmiAdapter],
+  projectId,
+  networks: [baseSepolia],
+  defaultNetwork: baseSepolia,
+  metadata: metadata,
+  features: {
+    analytics: true, // Optional - defaults to your Cloud configuration
+  },
+  siweConfig,
+  themeMode: "light",
+})
 
 export const api = createTRPCReact<AppRouter>()
 
@@ -38,7 +65,7 @@ export type RouterInputs = inferRouterInputs<AppRouter>
  */
 export type RouterOutputs = inferRouterOutputs<AppRouter>
 
-export function TRPCReactProvider(props: { children: React.ReactNode }) {
+export function Provider({ children, cookies }: { children: React.ReactNode; cookies: string | null }) {
   const queryClient = getQueryClient()
 
   const [trpcClient] = useState(() =>
@@ -61,16 +88,23 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
     })
   )
 
+  const initialState = cookieToInitialState(wagmiAdapter.wagmiConfig as Config, cookies)
+
   return (
     <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        <api.Provider
-          client={trpcClient}
-          queryClient={queryClient}
-        >
-          {props.children}
-        </api.Provider>
-      </QueryClientProvider>
+      <WagmiProvider
+        config={wagmiAdapter.wagmiConfig as Config}
+        initialState={initialState}
+      >
+        <QueryClientProvider client={queryClient}>
+          <api.Provider
+            client={trpcClient}
+            queryClient={queryClient}
+          >
+            {children}
+          </api.Provider>
+        </QueryClientProvider>
+      </WagmiProvider>
     </SessionProvider>
   )
 }
