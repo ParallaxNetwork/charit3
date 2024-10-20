@@ -206,7 +206,7 @@ const VoteForm = () => {
                         className="rounded-full border border-[#DBDBDB]"
                       />
                       <p className="text-dark">
-                        {shortAddress(card.creator.name || "")} - Creator Issue
+                        {shortAddress(card.creator.name ?? "")} - Creator Issue
                       </p>
                     </div>
                   </div>

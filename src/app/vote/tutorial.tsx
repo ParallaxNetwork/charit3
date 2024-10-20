@@ -1,15 +1,15 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
   DrawerFooter,
-} from "@/components/ui/drawer";
+} from "@/components/ui/drawer"
 
-import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils"
+import { useEffect, useState } from "react"
 
 const tutorials = [
   {
@@ -30,28 +30,29 @@ const tutorials = [
       "Pada akhir vote kamu bisa melihat hasil akhir dari “Top of Donation” dan kamu dapat kembali vote setelah periode time selesai",
     image: "/tutorial-2.svg",
   },
-];
+]
 
 const VoteTutorial = () => {
-  const [active, setActive] = useState(0);
-  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    console.log(localStorage.getItem("tutorial"));
+    console.log(localStorage.getItem("tutorial"))
     if (!localStorage.getItem("tutorial")) {
-      setOpen(true);
+      setOpen(true)
     }
-  }, []);
+  }, [])
 
   return (
     <>
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent mark={false} className="container px-10 pb-4">
-          <div className="rounded-2xl px- pb-0 mt-14">
+          <div className="px- mt-14 rounded-2xl pb-0">
             <div className="flex items-center gap-3">
               {tutorials.map((tutorial, i) => (
                 <div
-                  className={cn("h-1.5 rounded-full flex-1", {
+                  key={i}
+                  className={cn("h-1.5 flex-1 rounded-full", {
                     "bg-[#CBCBCB]": active !== i,
                     "bg-blue": active === i,
                   })}
@@ -62,6 +63,7 @@ const VoteTutorial = () => {
 
             {tutorials.map((tutorial, i) => (
               <div
+                key={i}
                 className={cn({
                   hidden: active !== i,
                 })}
@@ -69,10 +71,10 @@ const VoteTutorial = () => {
                 <div className="mt-5">
                   <img src={tutorial.image} />
                 </div>
-                <p className="mt-10 text-dark font-bold text-2xl text-center">
+                <p className="mt-10 text-center text-2xl font-bold text-dark">
                   {tutorial.title}
                 </p>
-                <p className="text-dark text-base mt-2.5 text-center">
+                <p className="mt-2.5 text-center text-base text-dark">
                   {tutorial.content}
                 </p>
               </div>
@@ -82,10 +84,10 @@ const VoteTutorial = () => {
               <Button
                 onClick={() => {
                   if (active === tutorials.length - 1) {
-                    setOpen(false);
-                    localStorage.setItem("tutorial", "true");
+                    setOpen(false)
+                    localStorage.setItem("tutorial", "true")
                   }
-                  setActive((prev) => prev + 1);
+                  setActive((prev) => prev + 1)
                 }}
               >
                 Continue
@@ -94,8 +96,8 @@ const VoteTutorial = () => {
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    setOpen(false);
-                    localStorage.setItem("tutorial", "true");
+                    setOpen(false)
+                    localStorage.setItem("tutorial", "true")
                   }}
                 >
                   Close
@@ -106,7 +108,7 @@ const VoteTutorial = () => {
         </DrawerContent>
       </Drawer>
     </>
-  );
-};
+  )
+}
 
-export default VoteTutorial;
+export default VoteTutorial

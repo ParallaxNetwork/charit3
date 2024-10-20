@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import CardResult from "@/components/card/result";
-import { Button } from "@/components/ui/button";
-import { countDownTo, formatDollar } from "@/lib/utils";
-import React, { useEffect } from "react";
+import CardResult from "@/components/card/result"
+import { Button } from "@/components/ui/button"
+import { countDownTo, formatDollar } from "@/lib/utils"
+import React, { useEffect } from "react"
 
 const data = [
   {
@@ -111,40 +111,41 @@ const data = [
     title: "Nash",
     amount: 1800,
   },
-];
+]
 
-const filters = ["Today", "This Week", "This Month"];
+const filters = ["Today", "This Week", "This Month"]
 
-type Props = {};
+type Props = {}
 
 const VoteResultContent = (props: Props) => {
-  const [filter, setFilter] = React.useState("Today");
+  const [filter, setFilter] = React.useState("Today")
 
-  const [countDown, setCountDown] = React.useState("");
+  const [countDown, setCountDown] = React.useState("")
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCountDown(countDownTo(new Date("2024-10-21").getTime() / 1000));
-    }, 1000);
+      setCountDown(countDownTo(new Date("2024-10-21").getTime() / 1000))
+    }, 1000)
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(interval)
+  }, [])
 
   return (
-    <div className="py-6 px-4 h-screen overflow-y-auto pb-52">
-      <div className="z-10 absolute bottom-0 inset-x-0 bg-white text-center border-t border-dark/10 pt-4 px-4 pb-6">
+    <div className="h-screen overflow-y-auto px-4 py-6 pb-52">
+      <div className="absolute inset-x-0 bottom-0 z-10 border-t border-dark/10 bg-white px-4 pb-6 pt-4 text-center">
         <p className="text-sm text-dark">Next voting in</p>
-        <p className="text-[42px] text-dark font-bold -mt-3">
+        <p className="-mt-3 text-[42px] font-bold text-dark">
           {countDown || "-"}
         </p>
       </div>
-      <div className="absolute bg-blur h-44 left-0 right-0 bottom-10 pointer-events-none"></div>
+      <div className="bg-blur pointer-events-none absolute bottom-10 left-0 right-0 h-44"></div>
 
       <div className="flex items-center gap-3">
         {filters.map((_filter, i) => (
           <Button
+            key={i}
             size="sm"
-            className="rounded-full flex-1"
+            className="flex-1 rounded-full"
             variant={_filter === filter ? "default" : "ghost"}
             onClick={() => setFilter(_filter)}
           >
@@ -153,16 +154,16 @@ const VoteResultContent = (props: Props) => {
         ))}
       </div>
 
-      <div className="mt-6 border border-dark bg-lilac rounded-xl flex justify-between items-center gap-2 p-3">
+      <div className="mt-6 flex items-center justify-between gap-2 rounded-xl border border-dark bg-lilac p-3">
         <div>
-          <p className="text-xs text-black/60 font-medium">
+          <p className="text-xs font-medium text-black/60">
             Total earning creating issue
           </p>
-          <p className="mt-1 text-[28px] text-dark font-bold">
+          <p className="mt-1 text-[28px] font-bold text-dark">
             {formatDollar(1200)}
           </p>
         </div>
-        <Button variant="claim-reward" className="!h-full ">
+        <Button variant="claim-reward" className="!h-full">
           Claim Reward
         </Button>
       </div>
@@ -184,7 +185,7 @@ const VoteResultContent = (props: Props) => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default VoteResultContent;
+export default VoteResultContent
