@@ -3,28 +3,17 @@ import { createTRPCRouter, protectedProcedure } from "../trpc"
 
 import { dbConnect } from "@/server/mongoose"
 import Issue from "@/server/models/issue"
-import { zIssue } from "@/server/schema/issue"
+import { zIssue, zIssueWithCreator } from "@/server/schema/issue"
 
 export const issueRouter = createTRPCRouter({
   getAll: protectedProcedure
-    .output(z.array(zIssue))
-    .input(z.object({ votedIssueIds: z.array(z.string()) }).optional())
-    .query(async ({ input }) => {
-      const votedIssueIds = input?.votedIssueIds
-      console.log("votedIssueIds", votedIssueIds)
+    .output(z.array(zIssueWithCreator))
+    .query(async () => {
       await dbConnect()
-      if (!votedIssueIds) {
-        const issues = await Issue.find()
-          .sort({ createdAt: -1 })
-          .populate("creator")
-        return issues
-      }
-      const issues = await Issue.find({
-        issueId: { $nin: votedIssueIds },
-      })
+      const issues = await Issue.find()
         .sort({ createdAt: -1 })
         .populate("creator")
-      return issues
+      return issues as unknown as z.infer<typeof zIssueWithCreator>[]
     }),
   create: protectedProcedure
     .input(zIssue.omit({ _id: true, createdAt: true, updatedAt: true }))
