@@ -106,7 +106,7 @@ const PledgeForm = ({ issue }: { issue: any }) => {
                   )}
                 />
                 <Button type="submit" className="mt-6 w-full rounded-full">
-                  Stake
+                  Send
                 </Button>
               </form>
             </Form>
