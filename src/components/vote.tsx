@@ -106,7 +106,7 @@ const VoteForm = () => {
       })
 
       toast.promise(doVoteYes(), {
-        loading: "Voting Yes...",
+        loading: "Send Voting...",
         success: (txReceipt) => {
           // toast.success("Voted Yes: " + txReceipt?.transactionHash)
           // return toast.promise(doVoteNo(), {
@@ -120,7 +120,7 @@ const VoteForm = () => {
           //   },
           // })
 
-          return "Voted Yes: " + txReceipt?.transactionHash
+          return "Success Voting: " + txReceipt?.transactionHash
         },
         error: (error) => {
           console.error("error", error)

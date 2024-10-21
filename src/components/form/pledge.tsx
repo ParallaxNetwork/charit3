@@ -15,14 +15,13 @@ import { Input } from "@/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { LuDollarSign } from "react-icons/lu"
-import { CardData } from "../card-vote"
 import { setVoteLocalStorage } from "@/lib/utils"
 
 const formSchema = z.object({
   amount: z.string(),
 })
 
-const PledgeForm = ({ issue }: { issue: CardData }) => {
+const PledgeForm = ({ issue }: { issue: any }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
