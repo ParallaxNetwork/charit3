@@ -366,7 +366,7 @@ contract DonationManagerVoting is Ownable, ReentrancyGuard {
         if (rounds[roundId].isActive) {
             revert HasActiveRound(roundId);
         }
-        if (votingStart <= issueRegisStart || votingEnd <= votingStart) {
+        if (votingStart <= issueRegisStart || votingEnd <= votingStart || issueRegisStart <= block.timestamp) {
             revert InvalidRoundTiming();
         }
 
@@ -437,7 +437,7 @@ contract DonationManagerVoting is Ownable, ReentrancyGuard {
      * @param yesVotes A bitmap where each set bit represents a YES vote on the corresponding issue.
      */
     function voteYes(uint256 yesVotes) external {
-        require(rounds[roundId].isActive, "Inactive round");
+        require(rounds[roundId].isActive && block.timestamp < rounds[roundId].votingEnd, "Inactive round");
 
         uint256 votesBitmap = userVotesBitmap[msg.sender][roundId];
 
@@ -458,7 +458,7 @@ contract DonationManagerVoting is Ownable, ReentrancyGuard {
      * @param noVotes A bitmap where each set bit represents a NO vote on the corresponding issue.
      */
     function voteNo(uint256 noVotes) external {
-        require(rounds[roundId].isActive, "Inactive round");
+        require(rounds[roundId].isActive && block.timestamp < rounds[roundId].votingEnd, "Inactive round");
 
         uint256 votesBitmap = userVotesBitmap[msg.sender][roundId];
 
