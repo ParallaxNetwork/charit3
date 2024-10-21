@@ -62,7 +62,7 @@ export const createPledgeBitmap = (issueIds: number[], votes: number[]) => {
   let bitmap = BigInt(0) // Initialize bitmap as BigInt to represent the full uint256 bitmap
 
   issueIds.forEach((issueId, index) => {
-    const voteValue = votes[index] || 0
+    const voteValue = votes[index] ?? 0
 
     // Ensure the vote/pledge value is valid (between 1 and B, hexadecimal 0x1 to 0xB)
     if (voteValue < 1 || voteValue > 11) {
@@ -79,13 +79,13 @@ export const createPledgeBitmap = (issueIds: number[], votes: number[]) => {
 }
 
 export const setVoteLocalStorage = (issueId: string, vote: number) => {
-  const votes = JSON.parse(localStorage.getItem("votes") || "{}")
+  const votes = JSON.parse(localStorage.getItem("votes") ?? "{}")
   votes[issueId] = vote
   localStorage.setItem("votes", JSON.stringify(votes))
 }
 
 export const getVoteLocalStorage = (issueId: string) => {
-  const votes = JSON.parse(localStorage.getItem("votes") || "{}")
+  const votes = JSON.parse(localStorage.getItem("votes") ?? "{}")
   return votes[issueId]
 }
 
@@ -94,7 +94,7 @@ export const clearVoteLocalStorage = () => {
 }
 
 export const getVotedIssueIdsLocalStorage = () => {
-  const votes = JSON.parse(localStorage.getItem("votes") || "{}")
+  const votes = JSON.parse(localStorage.getItem("votes") ?? "{}")
   return Object.keys(votes).map((issueId) => issueId)
 }
 
@@ -111,7 +111,7 @@ export const clearVoteRoundLocalStorage = () => {
 }
 
 export const retrieveVoteYesFromLocalStorage = () => {
-  const votes = JSON.parse(localStorage.getItem("votes") || "{}")
+  const votes = JSON.parse(localStorage.getItem("votes") ?? "{}")
   const voteYesIssuesId = Object.keys(votes)
     .filter((issueId) => Number(votes[issueId]) >= 1)
     .map((issueId) => Number(issueId))
@@ -120,7 +120,7 @@ export const retrieveVoteYesFromLocalStorage = () => {
 }
 
 export const retrieveVoteNoFromLocalStorage = () => {
-  const votes = JSON.parse(localStorage.getItem("votes") || "{}")
+  const votes = JSON.parse(localStorage.getItem("votes") ?? "{}")
   const voteNoIssuesId = Object.keys(votes)
     .filter((issueId) => Number(votes[issueId]) < 1)
     .map((issueId) => Number(issueId))

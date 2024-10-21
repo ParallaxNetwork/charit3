@@ -138,8 +138,8 @@ const VoteForm = () => {
     try {
       const voteYes = retrieveVoteYesFromLocalStorage()
       const _createPledgeBitmap = createPledgeBitmap(
-        voteYes[0] as number[],
-        voteYes[1] as number[],
+        voteYes[0] as number[], // eslint-disable-line @typescript-eslint/non-nullable-type-assertion-style
+        voteYes[1] as number[], // eslint-disable-line @typescript-eslint/non-nullable-type-assertion-style
       )
 
       const { request } = await simulateContract(config, {
