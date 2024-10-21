@@ -81,7 +81,11 @@ const VoteForm = () => {
     return cards?.length - 1
   }, [cards])
 
-  const removeCard = (issueId: string | null, action: "right" | "left") => {
+  const removeCard = (
+    issueId: string | null,
+    action: "right" | "left",
+    pledgeAmount?: number,
+  ) => {
     let _cards = [...cards]
     setCards((prev) => {
       const newCards = prev.filter((card, i) => card.issueId !== issueId)
@@ -90,7 +94,11 @@ const VoteForm = () => {
     })
     if (action === "right") {
       setRightSwipe((prev) => prev + 1)
-      setVoteLocalStorage(issueId ?? "", 1)
+      if (pledgeAmount) {
+        setVoteLocalStorage(issueId ?? "", pledgeAmount)
+      } else {
+        setVoteLocalStorage(issueId ?? "", 1)
+      }
     } else {
       setLeftSwipe((prev) => prev + 1)
       setVoteLocalStorage(issueId ?? "", 0)
@@ -252,7 +260,7 @@ const VoteForm = () => {
                     </div>
                   </div>
                 </div>
-                <PledgeForm issue={card} />
+                <PledgeForm issue={card} removeCard={removeCard} />
               </div>
 
               <div className="mt-12 p-1">

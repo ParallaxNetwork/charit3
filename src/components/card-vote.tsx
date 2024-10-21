@@ -11,7 +11,11 @@ import { useState } from "react"
 export type CardProps = {
   data: TIssueWithCreator
   active: boolean
-  removeCard: (issueId: string | null, action: "right" | "left") => void
+  removeCard: (
+    issueId: string | null,
+    action: "right" | "left",
+    pledgeAmount?: number,
+  ) => void
 }
 
 const CardVote = ({ data, active, removeCard }: CardProps) => {

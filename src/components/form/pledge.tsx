@@ -23,7 +23,17 @@ const formSchema = z.object({
   amount: z.string(),
 })
 
-const PledgeForm = ({ issue }: { issue: any }) => {
+const PledgeForm = ({
+  issue,
+  removeCard,
+}: {
+  issue: any
+  removeCard: (
+    issueId: string | null,
+    action: "right" | "left",
+    pledgeAmount?: number,
+  ) => void
+}) => {
   const [open, setOpen] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -34,7 +44,7 @@ const PledgeForm = ({ issue }: { issue: any }) => {
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    setVoteLocalStorage(issue.issueId ?? "", Number(values.amount))
+    removeCard(issue.issueId, "right", Number(values.amount))
     toast.success("Donation sent successfully")
     setOpen(false)
   }
