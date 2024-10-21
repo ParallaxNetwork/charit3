@@ -1,15 +1,15 @@
-import { TIssue } from "@/server/models/issue"
-import { TUser } from "@/server/models/user"
-import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion"
+import type { TIssueWithCreator } from "@/server/models/issue"
+import {
+  type PanInfo,
+  motion,
+  useMotionValue,
+  useTransform,
+} from "framer-motion"
 import Image from "next/image"
 import { useState } from "react"
 
-export type CardData = TIssue & {
-  creator: TUser
-}
-
 export type CardProps = {
-  data: CardData
+  data: TIssueWithCreator
   active: boolean
   removeCard: (issueId: string | null, action: "right" | "left") => void
 }

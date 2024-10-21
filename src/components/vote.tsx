@@ -1,13 +1,12 @@
 "use client"
 
-import CardVote from "@/components/card-vote"
-import { CardData } from "@/components/card-vote"
+import { useEffect, useState, useMemo } from "react"
 import { AnimatePresence } from "framer-motion"
-import { useEffect, useState } from "react"
-import { LuCircleDollarSign } from "react-icons/lu"
+import CardVote from "@/components/card-vote"
+import type { TIssueWithCreator } from "@/server/models/issue"
 import {
+  type CarouselApi,
   Carousel,
-  CarouselApi,
   CarouselContent,
   CarouselItem,
 } from "./ui/carousel"
@@ -22,14 +21,13 @@ import {
   shortAddress,
 } from "@/lib/utils"
 import PledgeForm from "./form/pledge"
-
+import { FaSpinner } from "react-icons/fa6"
+import { LuCircleDollarSign } from "react-icons/lu"
 import { api } from "@/trpc/react"
 import Avatar from "boring-avatars"
-import { FaSpinner } from "react-icons/fa6"
 import { useAccount, useReadContract } from "wagmi"
 import { CONTRACT_ABI_DONATION_MANAGER } from "@/lib/contract"
 import { env } from "@/env"
-
 import {
   simulateContract,
   waitForTransactionReceipt,
@@ -37,22 +35,15 @@ import {
 } from "@wagmi/core"
 import { config } from "@/lib/wagmi"
 import { toast } from "sonner"
+import { useBeforeUnload } from "@/hooks/useBeforeUnload"
 
 const VoteForm = () => {
-  // console.log("ini swipe", {
-  //   no: retrieveVoteNoFromLocalStorage(),
-  //   yes: retrieveVoteYesFromLocalStorage(),
-  // })
-  // const votedIssueIds = getVotedIssueIdsLocalStorage()
-  // console.log("votedIssueIds", votedIssueIds)
-
-  const { fetchStatus, data, isLoading, isSuccess } = api.issue.getAll
-    .useQuery
-    // { votedIssueIds },
-    ()
+  const { fetchStatus, data, isLoading, isFetched } =
+    api.issue.getAll.useQuery()
   console.log("data", data, fetchStatus)
 
-  const [cards, setCards] = useState<CardData[]>(data as any)
+  const [firstSwipe, setFirstSwipe] = useState(false)
+  const [cards, setCards] = useState<TIssueWithCreator[]>([])
   const [rightSwipe, setRightSwipe] = useState(0) // eslint-disable-line @typescript-eslint/no-unused-vars
   const [leftSwipe, setLeftSwipe] = useState(0) // eslint-disable-line @typescript-eslint/no-unused-vars
   const [apiCarousel, setApiCarousel] = useState<CarouselApi>()
@@ -65,13 +56,14 @@ const VoteForm = () => {
     functionName: "roundId",
   })
 
+  useBeforeUnload(firstSwipe)
+
   useEffect(() => {
-    if (!roundIdIsSuccess || !isSuccess) {
-      return
+    if (isFetched && data) {
+      setCards(data)
+      setVoteRoundLocalStorage(Number(roundId))
     }
-    setVoteRoundLocalStorage(roundId as number)
-    setCards(data as any)
-  }, [isSuccess, roundIdIsSuccess])
+  }, [isFetched, data])
 
   useEffect(() => {
     if (!apiCarousel) {
@@ -85,7 +77,10 @@ const VoteForm = () => {
     })
   }, [apiCarousel])
 
-  const activeIndex = cards?.length - 1
+  const activeIndex = useMemo(() => {
+    return cards?.length - 1
+  }, [cards])
+
   const removeCard = (issueId: string | null, action: "right" | "left") => {
     let _cards = [...cards]
     setCards((prev) => {
@@ -100,6 +95,7 @@ const VoteForm = () => {
       setLeftSwipe((prev) => prev + 1)
       setVoteLocalStorage(issueId ?? "", 0)
     }
+    setFirstSwipe(true)
     setSelectedScrollSnap(0)
 
     // last swipe
@@ -206,11 +202,11 @@ const VoteForm = () => {
       >
         <AnimatePresence>
           {cards?.length ? (
-            cards?.map((card, i) => (
+            cards?.map((card, index) => (
               <CardVote
-                key={i}
+                key={card._id.toString()}
                 data={card}
-                active={i === activeIndex}
+                active={index === activeIndex}
                 removeCard={removeCard}
               />
             ))

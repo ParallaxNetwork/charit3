@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { objectIdSchema } from "./global"
+import { zUser } from "./user"
 
 export const categories = [
   "Poverty & Hunger",
@@ -24,4 +25,8 @@ export const zIssue = z.object({
   issueId: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
+})
+
+export const zIssueWithCreator = zIssue.extend({
+  creator: zUser,
 })

@@ -487,4 +487,4 @@ export const CONTRACT_ABI_DONATION_MANAGER = [
     type: "function",
   },
   { stateMutability: "payable", type: "receive" },
-]
+] as const

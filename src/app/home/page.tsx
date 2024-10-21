@@ -1,6 +1,5 @@
 import CardResult from "@/components/card/result"
 import Nav from "@/components/nav"
-import { BiDonateHeart } from "react-icons/bi"
 import { getServerAuthSession } from "@/server/auth"
 import { Account } from "@/components/home/account"
 

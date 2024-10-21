@@ -14,12 +14,16 @@ export const issueRouter = createTRPCRouter({
       console.log("votedIssueIds", votedIssueIds)
       await dbConnect()
       if (!votedIssueIds) {
-        const issues = await Issue.find().populate("creator")
+        const issues = await Issue.find()
+          .sort({ createdAt: -1 })
+          .populate("creator")
         return issues
       }
       const issues = await Issue.find({
         issueId: { $nin: votedIssueIds },
-      }).populate("creator")
+      })
+        .sort({ createdAt: -1 })
+        .populate("creator")
       return issues
     }),
   create: protectedProcedure
