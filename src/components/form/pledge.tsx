@@ -16,12 +16,16 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { LuDollarSign } from "react-icons/lu"
 import { setVoteLocalStorage } from "@/lib/utils"
+import { toast } from "sonner"
+import { useState } from "react"
 
 const formSchema = z.object({
   amount: z.string(),
 })
 
 const PledgeForm = ({ issue }: { issue: any }) => {
+  const [open, setOpen] = useState(false)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -31,10 +35,12 @@ const PledgeForm = ({ issue }: { issue: any }) => {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setVoteLocalStorage(issue.issueId ?? "", Number(values.amount))
+    toast.success("Donation sent successfully")
+    setOpen(false)
   }
   return (
     <>
-      <Drawer>
+      <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
           <button className="btn-pledge shrink-0 transition-transform hover:scale-105 active:scale-100">
             <svg
