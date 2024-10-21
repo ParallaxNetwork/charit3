@@ -1,12 +1,21 @@
-import { getServerSession, type DefaultSession, type NextAuthOptions } from "next-auth"
+import {
+  getServerSession,
+  type DefaultSession,
+  type NextAuthOptions,
+} from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { type SIWESession, verifySignature, getChainIdFromMessage, getAddressFromMessage } from "@reown/appkit-siwe"
+import {
+  type SIWESession,
+  verifySignature,
+  getChainIdFromMessage,
+  getAddressFromMessage,
+} from "@reown/appkit-siwe"
 import { projectId } from "@/lib/wagmi"
 import { dbConnect } from "./mongoose"
 import User from "./models/user"
 import type { Session } from "next-auth"
 
-import { env } from "@/env"
+// import { env } from "@/env"
 
 declare module "next-auth" {
   interface Session extends SIWESession {
@@ -19,7 +28,7 @@ declare module "next-auth" {
   }
 }
 
-const useSecureCookies = env.NEXTAUTH_URL?.startsWith("https://")
+// const useSecureCookies = env.NEXTAUTH_URL?.startsWith("https://")
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -47,7 +56,13 @@ export const authOptions: NextAuthOptions = {
           const address = getAddressFromMessage(message)
           const chainId = getChainIdFromMessage(message)
 
-          const isValid = await verifySignature({ address, message, signature, chainId, projectId })
+          const isValid = await verifySignature({
+            address,
+            message,
+            signature,
+            chainId,
+            projectId,
+          })
 
           if (!isValid) {
             return null
@@ -85,19 +100,19 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 24 hours
   },
-  cookies: {
-    sessionToken: {
-      name: `${useSecureCookies ? "__Secure-" : ""}next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        // When working on localhost, the cookie domain must be omitted entirely (https://stackoverflow.com/a/1188145)
-        domain: useSecureCookies ? `.${env.NEXT_PUBLIC_ROOT_DOMAIN}` : undefined,
-        secure: useSecureCookies,
-      },
-    },
-  },
+  // cookies: {
+  //   sessionToken: {
+  //     name: `${useSecureCookies ? "__Secure-" : ""}next-auth.session-token`,
+  //     options: {
+  //       httpOnly: true,
+  //       sameSite: "lax",
+  //       path: "/",
+  //       // When working on localhost, the cookie domain must be omitted entirely (https://stackoverflow.com/a/1188145)
+  //       domain: useSecureCookies ? `.${env.NEXT_PUBLIC_ROOT_DOMAIN}` : undefined,
+  //       secure: useSecureCookies,
+  //     },
+  //   },
+  // },
   callbacks: {
     jwt: async ({ token, user, trigger, session }) => {
       if (trigger === "update" && session) {
