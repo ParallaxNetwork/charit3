@@ -14,7 +14,7 @@ export function GetStartedButton() {
 
   function handleClick() {
     if (isConnected) {
-      router.push("/verify")
+      router.push("/home")
       return
     }
 

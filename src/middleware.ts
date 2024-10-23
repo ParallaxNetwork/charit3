@@ -26,7 +26,7 @@ export default async function middleware(req: NextRequest) {
   const authPathnames = ["/"]
 
   if (authPathnames.includes(pathname) && session) {
-    return NextResponse.redirect(new URL("/verify", req.url))
+    return NextResponse.redirect(new URL("/home", req.url))
   } else if (!authPathnames.includes(pathname) && !session) {
     return NextResponse.redirect(new URL("/", req.url))
   }

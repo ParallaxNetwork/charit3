@@ -63,7 +63,7 @@ export const siweConfig = createSIWEConfig({
   },
   onSignIn: (session) => {
     if (session) {
-      window.location.replace("/verify")
+      window.location.replace("/home")
     }
   },
 })
